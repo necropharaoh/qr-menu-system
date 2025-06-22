@@ -19,16 +19,16 @@ app.use(cors());
 app.use(express.json());
 
 // Routes
-app.use('/auth', authRoutes);
-app.use('/menu', menuRoutes);
-app.use('/orders', ordersRoutes);
-app.use('/analytics', analyticsRoutes);
-app.use('/tables', tablesRoutes);
-app.use('/restaurant', restaurantRoutes);
-app.use('/waiter', waiterRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/menu', menuRoutes);
+app.use('/api/orders', ordersRoutes);
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/tables', tablesRoutes);
+app.use('/api/restaurant', restaurantRoutes);
+app.use('/api/waiter', waiterRoutes);
 
 // Health check
-app.get('/health', (req, res) => {
+app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'ok', 
     timestamp: new Date().toISOString(),
