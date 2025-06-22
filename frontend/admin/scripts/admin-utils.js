@@ -1,11 +1,11 @@
 // Admin Panel Utils
 console.log('Admin utils yükleniyor...');
 
-const API_BASE_URL = '/.netlify/functions/api';
+const API_BASE_URL = '';
 
 // API istekleri için yardımcı fonksiyonlar
 class API {
-  static baseURL = '/.netlify/functions/api';
+  static baseURL = '';
 
   static async request(endpoint, options = {}) {
     console.log('API isteği gönderiliyor:', endpoint, options);

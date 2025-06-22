@@ -66,7 +66,7 @@ class AdminRealTimeUpdates {
 
   async checkNewOrders() {
     try {
-      const orders = await API.get('/orders?limit=10');
+      const orders = await API.get('/api/orders?limit=10');
       
       if (orders.length > 0) {
         const latestOrder = orders[0];
@@ -83,7 +83,7 @@ class AdminRealTimeUpdates {
 
   async checkNewWaiterCalls() {
     try {
-      const calls = await API.get('/waiter/pending');
+      const calls = await API.get('/api/waiter/pending');
       
       if (calls.length > 0) {
         const latestCall = calls[0];
