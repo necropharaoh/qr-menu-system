@@ -1,0 +1,1947 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bandırma Café - QR Menü</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        :root {
+            --primary-color: #a16207;
+            --primary-dark: #92400e;
+            --secondary-color: #ea580c;
+            --accent-color: #f59e0b;
+            --coffee-warm: #78350f;
+            --caramel: #d97706;
+            --latte: #fef3c7;
+            --cream: #fffbeb;
+            --text-primary: #292524;
+            --text-secondary: #78716c;
+            --background: #ffffff;
+            --surface: #fafaf9;
+            --border: #e7e5e4;
+            --success: #16a34a;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --tap-target: 44px;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--surface);
+            min-height: 100vh;
+            padding: 8px;
+            color: var(--text-primary);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .container {
+            max-width: 420px;
+            margin: 0 auto;
+            background: var(--background);
+            border-radius: var(--radius-lg);
+            box-shadow: 0 4px 32px rgba(0,0,0,0.08);
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #1f2937 0%, var(--coffee-warm) 40%, var(--primary-color) 100%);
+            color: white;
+            padding: 24px 20px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 70% 30%, rgba(255,255,255,0.1) 0%, transparent 50%);
+            pointer-events: none;
+        }
+        
+        .cafe-name {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            letter-spacing: -0.025em;
+        }
+        
+        .table-info {
+            font-size: 14px;
+            opacity: 0.9;
+            font-weight: 500;
+        }
+        
+        .cart-summary {
+            background: rgba(255,255,255,0.15);
+            margin-top: 16px;
+            padding: 12px 16px;
+            border-radius: var(--radius-md);
+            font-size: 15px;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+        }
+        
+        .reset-cart {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: rgba(239, 68, 68, 0.9);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            opacity: 0;
+            z-index: 50;
+        }
+        
+        .reset-cart.show {
+            opacity: 1;
+        }
+        
+        .reset-cart:hover {
+            background: #dc2626;
+            transform: scale(1.1);
+        }
+        
+        .menu-section {
+            padding: 16px 20px;
+        }
+        
+        .section-title {
+            font-size: 20px;
+            color: var(--coffee-warm);
+            margin-bottom: 16px;
+            font-weight: 700;
+            padding-bottom: 10px;
+            border-bottom: 3px solid var(--caramel);
+            letter-spacing: -0.02em;
+            position: sticky;
+            top: 0;
+            background: var(--background);
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .menu-item {
+            background: var(--background);
+            border: none;
+            border-radius: var(--radius-md);
+            padding: 16px;
+            margin-bottom: 12px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            min-height: var(--tap-target);
+            border: 1px solid transparent;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        
+        .menu-item:nth-child(even) {
+            background: var(--cream);
+        }
+        
+        .menu-item:nth-child(even):hover {
+            background: var(--latte);
+        }
+        
+        .menu-item:nth-child(even).selected {
+            background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+        }
+        
+        .menu-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(161, 98, 7, 0.15);
+            border-color: var(--caramel);
+        }
+        
+        .menu-item.selected {
+            background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+            border-color: var(--success);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(22, 163, 74, 0.2);
+        }
+        
+        .menu-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(37, 99, 235, 0.1), transparent);
+            transition: left 0.6s ease;
+        }
+        
+        .menu-item.ripple::before {
+            left: 100%;
+        }
+        
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+            position: relative;
+        }
+        
+        .item-info {
+            flex: 1;
+            margin-right: 12px;
+        }
+        
+        .item-name {
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--coffee-warm);
+            letter-spacing: -0.01em;
+            line-height: 1.3;
+            margin-bottom: 2px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .required-indicator {
+            color: var(--error);
+            font-size: 11px;
+            font-weight: 700;
+            background: rgba(239, 68, 68, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            line-height: 1;
+        }
+        
+        .menu-item.selected .item-name {
+            color: var(--success);
+        }
+        
+        .item-price {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--primary-color);
+            letter-spacing: -0.01em;
+            white-space: nowrap;
+        }
+        
+        .menu-item.selected .item-price {
+            color: var(--success);
+        }
+        
+        .quantity-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: var(--success);
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            box-shadow: 0 2px 8px rgba(34, 197, 94, 0.4);
+            animation: bounceIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+        
+        .quantity-badge.show {
+            display: flex;
+        }
+        
+        @keyframes bounceIn {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        
+        .item-description {
+            color: var(--text-secondary);
+            font-size: 13px;
+            line-height: 1.5;
+            margin-bottom: 8px;
+        }
+        
+        .selected-customizations {
+            margin-top: 8px;
+            padding: 8px 12px;
+            background: #f0fdf4;
+            border-radius: var(--radius-sm);
+            border-left: 3px solid var(--success);
+            font-size: 13px;
+            color: var(--text-primary);
+            display: none;
+        }
+        
+        .selected-customizations.show {
+            display: block;
+        }
+        
+        .selected-customizations .label {
+            font-weight: 600;
+            color: var(--success);
+            margin-bottom: 4px;
+        }
+        
+        .selected-customizations .items {
+            font-weight: 500;
+        }
+        
+        .cart-items-summary {
+            margin-top: 8px;
+            padding: 8px 12px;
+            background: var(--latte);
+            border-radius: var(--radius-sm);
+            border-left: 3px solid var(--primary-color);
+            font-size: 12px;
+            color: var(--text-primary);
+            display: none;
+        }
+        
+        .cart-items-summary.show {
+            display: block;
+        }
+        
+        .cart-items-summary .label {
+            font-weight: 600;
+            color: var(--coffee-warm);
+            margin-bottom: 4px;
+        }
+        
+        .cart-item-preview {
+            padding: 2px 0;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+        
+        .quantity-controls {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        
+        .quantity-controls.show {
+            display: flex;
+        }
+        
+        .quantity-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            line-height: 1;
+        }
+        
+        .quantity-btn:hover {
+            background: var(--primary-dark);
+            transform: scale(1.1);
+        }
+        
+        .quantity-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .quantity-btn.minus {
+            background: var(--error);
+        }
+        
+        .quantity-btn.minus:hover {
+            background: #dc2626;
+        }
+        
+        .quantity-display {
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 8px 16px;
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
+            min-width: 50px;
+            text-align: center;
+        }
+        
+        .item-customization {
+            display: none;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+        }
+        
+        .item-customization.show {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+        
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .customization-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+        
+        .customization-option {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f1f5f9;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            position: relative;
+        }
+        
+        .customization-option:hover {
+            background: var(--surface);
+            margin: 0 -8px;
+            padding: 10px 8px;
+            border-radius: var(--radius-sm);
+        }
+        
+        .customization-option:last-child {
+            border-bottom: none;
+        }
+        
+        .customization-option.selected {
+            background: #f0fdf4;
+            margin: 0 -8px;
+            padding: 10px 8px;
+            border-radius: var(--radius-sm);
+            border-bottom: 1px solid #bbf7d0;
+        }
+        
+        .customization-option.selected::after {
+            content: '✓';
+            position: absolute;
+            right: 8px;
+            color: var(--success);
+            font-weight: 700;
+            font-size: 16px;
+        }
+        
+        .option-name {
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+        
+        .option-price {
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        
+        .option-price.positive {
+            color: var(--accent-color);
+        }
+        
+        .option-price.negative {
+            color: var(--success);
+        }
+        
+        .customize-button {
+            background: var(--primary-color);
+            border: none;
+            color: white;
+            padding: 10px 16px;
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 12px;
+            margin-right: 8px;
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
+        }
+        
+        .customize-button:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+        
+        .add-to-cart-button {
+            background: var(--success);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 12px;
+            box-shadow: 0 2px 8px rgba(34, 197, 94, 0.2);
+        }
+        
+        .add-to-cart-button:not(.active) {
+            background: #e2e8f0;
+            color: #94a3b8;
+            box-shadow: none;
+            opacity: 0.6;
+            pointer-events: none;
+        }
+        
+        .add-to-cart-button.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+        
+        .add-to-cart-button.active:hover {
+            background: #16a34a;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(34, 197, 94, 0.4);
+        }
+        
+        .cart-section {
+            background: var(--surface);
+            padding: 20px;
+            border-top: 1px solid var(--border);
+        }
+        
+        .cart-title {
+            font-size: 18px;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .cart-icon {
+            width: 22px;
+            height: 22px;
+        }
+        
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-radius: var(--radius-sm);
+        }
+        
+        .cart-item:hover {
+            background: white;
+            margin: 0 -12px;
+            padding: 12px 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        
+        .cart-item:last-child {
+            border-bottom: none;
+            font-weight: 700;
+            font-size: 16px;
+            color: var(--coffee-warm);
+            margin-top: 8px;
+            padding-top: 16px;
+            border-top: 2px solid var(--border);
+            cursor: default;
+        }
+        
+        .cart-item:last-child:hover {
+            background: none;
+            margin-top: 8px;
+            padding: 16px 0 12px 0;
+            box-shadow: none;
+        }
+        
+        .cart-item-name {
+            flex: 1;
+            font-weight: 500;
+        }
+        
+        .cart-item-details {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+        
+        .cart-item-price {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .order-button {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--caramel) 100%);
+            color: white;
+            border: none;
+            padding: 16px 20px;
+            border-radius: var(--radius-md);
+            font-size: 16px;
+            font-weight: 700;
+            width: 100%;
+            margin-top: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            min-height: var(--tap-target);
+            box-shadow: 0 4px 12px rgba(161, 98, 7, 0.3);
+        }
+        
+        .order-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(37, 99, 235, 0.4);
+        }
+        
+        .order-button:active {
+            transform: translateY(0);
+        }
+        
+        .order-button:disabled {
+            background: var(--border);
+            color: var(--text-secondary);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .empty-cart {
+            text-align: center;
+            color: var(--text-secondary);
+            font-style: italic;
+            padding: 32px 20px;
+            font-size: 14px;
+            background: white;
+            border-radius: var(--radius-md);
+            border: 2px dashed var(--border);
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 16px;
+            background: var(--surface);
+            color: var(--text-secondary);
+            font-size: 12px;
+            border-top: 1px solid var(--border);
+        }
+        
+        @media (max-width: 480px) {
+            .container {
+                margin: 0;
+                border-radius: 0;
+                min-height: 100vh;
+            }
+            
+            .menu-section {
+                padding: 16px;
+            }
+            
+            .cart-section {
+                padding: 16px;
+            }
+        }
+        
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+        
+        .loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            margin: -10px 0 0 -10px;
+            border: 2px solid var(--border);
+            border-top: 2px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .success-flash {
+            animation: successPulse 0.6s ease;
+        }
+        
+        @keyframes successPulse {
+            0% { background: var(--background); }
+            50% { background: #f0fdf4; }
+            100% { background: var(--background); }
+        }
+        
+        .section-icon {
+            width: 24px;
+            height: 24px;
+            opacity: 0.9;
+        }
+        
+        .section-icon svg {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .waiter-section {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 16px;
+        }
+        
+        .waiter-button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
+        }
+        
+        .waiter-button:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+        
+        .waiter-icon {
+            width: 24px;
+            height: 24px;
+        }
+        
+        .waiter-status {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="cafe-name" id="cafeName">Tap Café</div>
+            <div class="table-info" id="tableInfo">Masa 7 - QR Menü</div>
+            <div class="cart-summary">
+                <span>Sepet: <span id="cartTotal">0</span>₺</span>
+                <span>(<span id="cartCount">0</span> ürün)</span>
+                <button class="reset-cart" id="resetCart" title="Sepeti Temizle">×</button>
+            </div>
+        </div>
+        
+        <div class="menu-section">
+            <div class="section-title">
+                <span class="section-icon">
+                    <svg viewBox="0 0 256 256" fill="none">
+                        <path opacity="0.2" d="M208,88v40a80,80,0,0,1-160,0V88Z" fill="var(--caramel)"/>
+                        <path d="M80,56V24a8,8,0,0,1,16,0V56" stroke="var(--coffee-warm)" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M120,56V24a8,8,0,0,1,16,0V56" stroke="var(--coffee-warm)" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M160,56V24a8,8,0,0,1,16,0V56" stroke="var(--coffee-warm)" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M48,88V128a80,80,0,0,0,160,0V88Z" stroke="var(--coffee-warm)" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M48,88H208" stroke="var(--coffee-warm)" stroke-width="12" stroke-linecap="round"/>
+                    </svg>
+                </span>
+                Sıcak İçecekler
+            </div>
+            
+            <div class="menu-item" data-id="1" data-name="Çay" data-price="30" onclick="tapToOrder(1)">
+                <div class="item-header">
+                    <div class="item-info">
+                        <div class="item-name">Çay</div>
+                        <div class="item-price" id="price-1">30₺</div>
+                    </div>
+                    <div class="quantity-badge" id="badge-1">1</div>
+                </div>
+                <div class="item-description">Geleneksel demleme çay</div>
+                <div class="selected-customizations" id="selected-1">
+                    <div class="label">Seçilen:</div>
+                    <div class="items" id="selected-items-1"></div>
+                </div>
+                <div class="cart-items-summary" id="cart-summary-1">
+                    <div class="label">Sepetteki öğeler:</div>
+                    <div id="cart-items-preview-1"></div>
+                </div>
+                <div class="quantity-controls" id="controls-1">
+                    <button class="quantity-btn minus" onclick="decreaseQuantity(1, event)">−</button>
+                    <div class="quantity-display" id="quantity-1">1</div>
+                    <button class="quantity-btn plus" onclick="increaseQuantity(1, event)">+</button>
+                </div>
+                <div class="item-customization" id="custom-1">
+                    <div class="customization-title">Özelleştir</div>
+                    <div class="customization-option" onclick="addCustomization(1, 'Açık Demli', 0, event)">
+                        <span class="option-name">Açık Demli</span>
+                        <span class="option-price">+0₺</span>
+                    </div>
+                    <div class="customization-option" onclick="addCustomization(1, 'Şekerli', 0, event)">
+                        <span class="option-name">Şekerli</span>
+                        <span class="option-price">+0₺</span>
+                    </div>
+                    <div class="customization-option" onclick="addCustomization(1, 'Az Şekerli', 0, event)">
+                        <span class="option-name">Az Şekerli</span>
+                        <span class="option-price">+0₺</span>
+                    </div>
+                    <div class="customization-option" onclick="addCustomization(1, 'Şekersiz', 0, event)">
+                        <span class="option-name">Şekersiz</span>
+                        <span class="option-price">+0₺</span>
+                    </div>
+                </div>
+                <button class="customize-button" onclick="toggleCustomization(1, event)">Özelleştir</button>
+                <button class="add-to-cart-button active" id="add-1" onclick="addToCartWithCustomization(1, event)">Ekle</button>
+            </div>
+            
+            <div class="menu-item" data-id="2" data-name="Türk Kahvesi" data-price="70" onclick="tapToOrder(2)">
+                <div class="item-header">
+                    <div class="item-info">
+                        <div class="item-name">
+                            Türk Kahvesi
+                            <span class="required-indicator">Seçim</span>
+                        </div>
+                        <div class="item-price" id="price-2">70₺</div>
+                    </div>
+                    <div class="quantity-badge" id="badge-2">1</div>
+                </div>
+                <div class="item-description">Geleneksel Türk kahvesi</div>
+                <div class="selected-customizations" id="selected-2">
+                    <div class="label">Seçilen:</div>
+                    <div class="items" id="selected-items-2"></div>
+                </div>
+                <div class="cart-items-summary" id="cart-summary-2">
+                    <div class="label">Sepetteki öğeler:</div>
+                    <div id="cart-items-preview-2"></div>
+                </div>
+                <div class="quantity-controls" id="controls-2">
+                    <button class="quantity-btn minus" onclick="decreaseQuantity(2, event)">−</button>
+                    <div class="quantity-display" id="quantity-2">1</div>
+                    <button class="quantity-btn plus" onclick="increaseQuantity(2, event)">+</button>
+                </div>
+                <div class="item-customization" id="custom-2">
+                    <div class="customization-title">Şeker Seviyesi</div>
+                    <div class="customization-option" onclick="addCustomization(2, 'Şekerli', 0, event)">
+                        <span class="option-name">Şekerli</span>
+                        <span class="option-price">+0₺</span>
+                    </div>
+                    <div class="customization-option" onclick="addCustomization(2, 'Orta', 0, event)">
+                        <span class="option-name">Orta</span>
+                        <span class="option-price">+0₺</span>
+                    </div>
+                    <div class="customization-option" onclick="addCustomization(2, 'Az Şekerli', 0, event)">
+                        <span class="option-name">Az Şekerli</span>
+                        <span class="option-price">+0₺</span>
+                    </div>
+                    <div class="customization-option" onclick="addCustomization(2, 'Şekersiz', 0, event)">
+                        <span class="option-name">Şekersiz</span>
+                        <span class="option-price">+0₺</span>
+                    </div>
+                </div>
+                <button class="customize-button" onclick="toggleCustomization(2, event)">Özelleştir</button>
+                <button class="add-to-cart-button" id="add-2" onclick="addToCartWithCustomization(2, event)">Ekle</button>
+            </div>
+            
+            <div class="menu-item" data-id="9" data-name="Sahlep" data-price="70" onclick="tapToOrder(9)">
+                <div class="item-header">
+                    <div class="item-info">
+                        <div class="item-name">Sahlep</div>
+                        <div class="item-price" id="price-9">70₺</div>
+                    </div>
+                    <div class="quantity-badge" id="badge-9">1</div>
+                </div>
+                <div class="item-description">Geleneksel kış içeceği, tarçın ile</div>
+                <div class="selected-customizations" id="selected-9">
+                    <div class="label">Seçilen:</div>
+                    <div class="items" id="selected-items-9"></div>
+                </div>
+                <div class="cart-items-summary" id="cart-summary-9">
+                    <div class="label">Sepetteki öğeler:</div>
+                    <div id="cart-items-preview-9"></div>
+                </div>
+                <div class="quantity-controls" id="controls-9">
+                    <button class="quantity-btn minus" onclick="decreaseQuantity(9, event)">−</button>
+                    <div class="quantity-display" id="quantity-9">1</div>
+                    <button class="quantity-btn plus" onclick="increaseQuantity(9, event)">+</button>
+                </div>
+                <div class="item-customization" id="custom-9">
+                    <div class="customization-title">Ekstralar</div>
+                    <div class="customization-option" onclick="addCustomization(9, 'Extra Tarçın', 5, event)">
+                        <span class="option-name">Extra Tarçın</span>
+                        <span class="option-price positive">+5₺</span>
+                    </div>
+                    <div class="customization-option" onclick="addCustomization(9, 'Fındık', 10, event)">
+                        <span class="option-name">Fındık</span>
+                        <span class="option-price positive">+10₺</span>
+                    </div>
+                </div>
+                <button class="customize-button" onclick="toggleCustomization(9, event)">Özelleştir</button>
+                <button class="add-to-cart-button active" id="add-9" onclick="addToCartWithCustomization(9, event)">Ekle</button>
+            </div>
+        </div>
+        
+        <div class="menu-section">
+            <div class="section-title">
+                <span class="section-icon">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <circle cx="8" cy="8" r="4" fill="var(--caramel)" opacity="0.2"/>
+                        <circle cx="16" cy="16" r="4" fill="var(--caramel)" opacity="0.2"/>
+                        <circle cx="8" cy="8" r="4" stroke="var(--coffee-warm)" stroke-width="2"/>
+                        <circle cx="16" cy="16" r="4" stroke="var(--coffee-warm)" stroke-width="2"/>
+                        <path d="M12 12l2 2" stroke="var(--coffee-warm)" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M10 10l2 2" stroke="var(--coffee-warm)" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </span>
+                Espresso Kahveler
+            </div>
+            
+            <div class="menu-item" data-id="3" data-name="Cappucino" data-price="100" onclick="tapToOrder(3)">
+                <div class="item-header">
+                    <div class="item-info">
+                        <div class="item-name">Cappucino</div>
+                        <div class="item-price" id="price-3">100₺</div>
+                    </div>
+                    <div class="quantity-badge" id="badge-3">1</div>
+                </div>
+                <div class="item-description">Espresso + süt köpüğü</div>
+                <div class="selected-customizations" id="selected-3">
+                    <div class="label">Seçilen:</div>
+                    <div class="items" id="selected-items-3"></div>
+                </div>
+                <div class="cart-items-summary" id="cart-summary-3">
+                    <div class="label">Sepetteki öğeler:</div>
+                    <div id="cart-items-preview-3"></div>
+                </div>
+                <div class="quantity-controls" id="controls-3">
+                    <button class="quantity-btn minus" onclick="decreaseQuantity(3, event)">−</button>
+                    <div class="quantity-display" id="quantity-3">1</div>
+                    <button class="quantity-btn plus" onclick="increaseQuantity(3, event)">+</button>
+                </div>
+                <div class="item-customization" id="custom-3">
+                    <div class="customization-title">Boyut & Ekstralar</div>
+                    <div class="customization-option" onclick="addCustomization(3, 'Grande', 15, event)">
+                        <span class="option-name">Grande (Büyük)</span>
+                        <span class="option-price positive">+15₺</span>
+                    </div>
+                    <div class="customization-option" onclick="addCustomization(3, 'Extra Shot', 10, event)">
+                        <span class="option-name">Extra Shot</span>
+                        <span class="option-price positive">+10₺</span>
+                    </div>
+                    <div class="customization-option" onclick="addCustomization(3, 'Laktozsuz Süt', 5, event)">
+                        <span class="option-name">Laktozsuz Süt</span>
+                        <span class="option-price positive">+5₺</span>
+                    </div>
+                </div>
+                <button class="customize-button" onclick="toggleCustomization(3, event)">Özelleştir</button>
+                <button class="add-to-cart-button active" id="add-3" onclick="addToCartWithCustomization(3, event)">Ekle</button>
+            </div>
+            
+            <div class="menu-item" data-id="4" data-name="Latte" data-price="100" onclick="tapToOrder(4)">
+                <div class="item-header">
+                    <div class="item-info">
+                        <div class="item-name">Latte</div>
+                        <div class="item-price" id="price-4">100₺</div>
+                    </div>
+                    <div class="quantity-badge" id="badge-4">1</div>
+                </div>
+                <div class="item-description">Espresso + buharda ısıtılmış süt</div>
+                <div class="selected-customizations" id="selected-4">
+                    <div class="label">Seçilen:</div>
+                    <div class="items" id="selected-items-4"></div>
+                </div>
+                <div class="cart-items-summary" id="cart-summary-4">
+                    <div class="label">Sepetteki öğeler:</div>
+                    <div id="cart-items-preview-4"></div>
+                </div>
+                <div class="quantity-controls" id="controls-4">
+                    <button class="quantity-btn minus" onclick="decreaseQuantity(4, event)">−</button>
+                    <div class="quantity-display" id="quantity-4">1</div>
+                    <button class="quantity-btn plus" onclick="increaseQuantity(4, event)">+</button>
+                </div>
+                <div class="item-customization" id="custom-4">
+                    <div class="customization-title">Şurup Seçenekleri</div>
+                    <div class="customization-option" onclick="addCustomization(4, 'Vanilya Şurup', 20, event)">
+                        <span class="option-name">Vanilya Şurup</span>
+                        <span class="option-price positive">+20₺</span>
+                    </div>
+                    <div class="customization-option" onclick="addCustomization(4, 'Karamel Şurup', 20, event)">
+                        <span class="option-name">Karamel Şurup</span>
+                        <span class="option-price positive">+20₺</span>
+                    </div>
+                    <div class="customization-option" onclick="addCustomization(4, 'Fındık Şurup', 20, event)">
+                        <span class="option-name">Fındık Şurup</span>
+                        <span class="option-price positive">+20₺</span>
+                    </div>
+                    <div class="customization-title" style="margin-top: 12px;">Boyut</div>
+                    <div class="customization-option" onclick="addCustomization(4, 'Grande', 15, event)">
+                        <span class="option-name">Grande (Büyük)</span>
+                        <span class="option-price positive">+15₺</span>
+                    </div>
+                </div>
+                <button class="customize-button" onclick="toggleCustomization(4, event)">Özelleştir</button>
+                <button class="add-to-cart-button active" id="add-4" onclick="addToCartWithCustomization(4, event)">Ekle</button>
+            </div>
+        </div>
+        
+        <div class="menu-section">
+            <div class="section-title">
+                <span class="section-icon">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M5 7l2 12h10l2-12H5z" fill="var(--caramel)" opacity="0.2"/>
+                        <path d="M5 7l2 12h10l2-12H5z" stroke="var(--coffee-warm)" stroke-width="2" stroke-linejoin="round"/>
+                        <path d="M12 11v6" stroke="var(--coffee-warm)" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M8 4l1 3" stroke="var(--coffee-warm)" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M16 4l-1 3" stroke="var(--coffee-warm)" stroke-width="2" stroke-linecap="round"/>
+                        <circle cx="6" cy="4" r="1" fill="var(--coffee-warm)"/>
+                        <circle cx="12" cy="4" r="1" fill="var(--coffee-warm)"/>
+                        <circle cx="18" cy="4" r="1" fill="var(--coffee-warm)"/>
+                    </svg>
+                </span>
+                Soğuk İçecekler
+            </div>
+            
+            <div class="menu-item" data-id="5" data-name="Ice Tea" data-price="70" onclick="tapToOrder(5)">
+                <div class="item-header">
+                    <div class="item-info">
+                        <div class="item-name">
+                            Ice Tea
+                            <span class="required-indicator">Seçim</span>
+                        </div>
+                        <div class="item-price" id="price-5">70₺</div>
+                    </div>
+                    <div class="quantity-badge" id="badge-5">1</div>
+                </div>
+                <div class="item-description">Serinletici buzlu çay</div>
+                <div class="selected-customizations" id="selected-5">
+                    <div class="label">Seçilen:</div>
+                    <div class="items" id="selected-items-5"></div>
+                </div>
+                <div class="cart-items-summary" id="cart-summary-5">
+                    <div class="label">Sepetteki öğeler:</div>
+                    <div id="cart-items-preview-5"></div>
+                </div>
+                <div class="quantity-controls" id="controls-5">
+                    <button class="quantity-btn minus" onclick="decreaseQuantity(5, event)">−</button>
+                    <div class="quantity-display" id="quantity-5">1</div>
+                    <button class="quantity-btn plus" onclick="increaseQuantity(5, event)">+</button>
+                </div>
+                <div class="item-customization" id="custom-5">
+                    <div class="customization-title">Aroma Seçimi</div>
+                    <div class="customization-option" onclick="addCustomization(5, 'Mango', 0, event)">
+                        <span class="option-name">Mango</span>
+                        <span class="option-price">+0₺</span>
+                    </div>
+                    <div class="customization-option" onclick="addCustomization(5, 'Şeftali', 0, event)">
+                        <span class="option-name">Şeftali</span>
+                        <span class="option-price">+0₺</span>
+                    </div>
+                    <div class="customization-option" onclick="addCustomization(5, 'Limon', 0, event)">
+                        <span class="option-name">Limon</span>
+                        <span class="option-price">+0₺</span>
+                    </div>
+                </div>
+                <button class="customize-button" onclick="toggleCustomization(5, event)">Özelleştir</button>
+                <button class="add-to-cart-button" id="add-5" onclick="addToCartWithCustomization(5, event)">Ekle</button>
+            </div>
+            
+            <div class="menu-item" data-id="6" data-name="Ayran" data-price="25" onclick="tapToOrder(6)">
+                <div class="item-header">
+                    <div class="item-info">
+                        <div class="item-name">Ayran</div>
+                        <div class="item-price" id="price-6">25₺</div>
+                    </div>
+                    <div class="quantity-badge" id="badge-6">1</div>
+                </div>
+                <div class="item-description">Geleneksel yoğurt içeceği</div>
+                <div class="cart-items-summary" id="cart-summary-6">
+                    <div class="label">Sepetteki öğeler:</div>
+                    <div id="cart-items-preview-6"></div>
+                </div>
+                <div class="quantity-controls" id="controls-6">
+                    <button class="quantity-btn minus" onclick="decreaseQuantity(6, event)">−</button>
+                    <div class="quantity-display" id="quantity-6">1</div>
+                    <button class="quantity-btn plus" onclick="increaseQuantity(6, event)">+</button>
+                </div>
+                <button class="add-to-cart-button active" id="add-6" onclick="addToCartWithCustomization(6, event)">Ekle</button>
+            </div>
+            
+            <div class="menu-item" data-id="10" data-name="Limonata" data-price="75" onclick="tapToOrder(10)">
+                <div class="item-header">
+                    <div class="item-info">
+                        <div class="item-name">Limonata</div>
+                        <div class="item-price" id="price-10">75₺</div>
+                    </div>
+                    <div class="quantity-badge" id="badge-10">1</div>
+                </div>
+                <div class="item-description">Taze sıkılmış limon</div>
+                <div class="cart-items-summary" id="cart-summary-10">
+                    <div class="label">Sepetteki öğeler:</div>
+                    <div id="cart-items-preview-10"></div>
+                </div>
+                <div class="quantity-controls" id="controls-10">
+                    <button class="quantity-btn minus" onclick="decreaseQuantity(10, event)">−</button>
+                    <div class="quantity-display" id="quantity-10">1</div>
+                    <button class="quantity-btn plus" onclick="increaseQuantity(10, event)">+</button>
+                </div>
+                <button class="add-to-cart-button active" id="add-10" onclick="addToCartWithCustomization(10, event)">Ekle</button>
+            </div>
+        </div>
+        
+        <div class="menu-section">
+            <div class="section-title">
+                <span class="section-icon">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M3 7h18l-1 10H4L3 7z" fill="var(--caramel)" opacity="0.3"/>
+                        <path d="M3 7h18l-1 10H4L3 7z" stroke="var(--coffee-warm)" stroke-width="2" stroke-linejoin="round"/>
+                        <path d="M6 7V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2" stroke="var(--coffee-warm)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M8 11h8" stroke="var(--coffee-warm)" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M9 14h6" stroke="var(--coffee-warm)" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </span>
+                Aperatifler
+            </div>
+            
+            <div class="menu-item" data-id="7" data-name="Kaşarlı Tost" data-price="80" onclick="tapToOrder(7)">
+                <div class="item-header">
+                    <div class="item-info">
+                        <div class="item-name">Kaşarlı Tost</div>
+                        <div class="item-price" id="price-7">80₺</div>
+                    </div>
+                    <div class="quantity-badge" id="badge-7">1</div>
+                </div>
+                <div class="item-description">Kızarmış ekmek arası kaşar peyniri</div>
+                <div class="selected-customizations" id="selected-7">
+                    <div class="label">Seçilen:</div>
+                    <div class="items" id="selected-items-7"></div>
+                </div>
+                <div class="cart-items-summary" id="cart-summary-7">
+                    <div class="label">Sepetteki öğeler:</div>
+                    <div id="cart-items-preview-7"></div>
+                </div>
+                <div class="quantity-controls" id="controls-7">
+                    <button class="quantity-btn minus" onclick="decreaseQuantity(7, event)">−</button>
+                    <div class="quantity-display" id="quantity-7">1</div>
+                    <button class="quantity-btn plus" onclick="increaseQuantity(7, event)">+</button>
+                </div>
+                <div class="item-customization" id="custom-7">
+                    <div class="customization-title">Ekstralar</div>
+                    <div class="customization-option" onclick="addCustomization(7, 'Domates', 10, event)">
+                        <span class="option-name">Domates</span>
+                        <span class="option-price positive">+10₺</span>
+                    </div>
+                    <div class="customization-option" onclick="addCustomization(7, 'Sucuk', 25, event)">
+                        <span class="option-name">Sucuk</span>
+                        <span class="option-price positive">+25₺</span>
+                    </div>
+                    <div class="customization-option" onclick="addCustomization(7, 'Turşu', 5, event)">
+                        <span class="option-name">Turşu</span>
+                        <span class="option-price positive">+5₺</span>
+                    </div>
+                </div>
+                <button class="customize-button" onclick="toggleCustomization(7, event)">Özelleştir</button>
+                <button class="add-to-cart-button active" id="add-7" onclick="addToCartWithCustomization(7, event)">Ekle</button>
+            </div>
+            
+            <div class="menu-item" data-id="8" data-name="Hamburger" data-price="175" onclick="tapToOrder(8)">
+                <div class="item-header">
+                    <div class="item-info">
+                        <div class="item-name">Hamburger</div>
+                        <div class="item-price" id="price-8">175₺</div>
+                    </div>
+                    <div class="quantity-badge" id="badge-8">1</div>
+                </div>
+                <div class="item-description">Dana eti burger, patates kızartması ile</div>
+                <div class="selected-customizations" id="selected-8">
+                    <div class="label">Seçilen:</div>
+                    <div class="items" id="selected-items-8"></div>
+                </div>
+                <div class="cart-items-summary" id="cart-summary-8">
+                    <div class="label">Sepetteki öğeler:</div>
+                    <div id="cart-items-preview-8"></div>
+                </div>
+                <div class="quantity-controls" id="controls-8">
+                    <button class="quantity-btn minus" onclick="decreaseQuantity(8, event)">−</button>
+                    <div class="quantity-display" id="quantity-8">1</div>
+                    <button class="quantity-btn plus" onclick="increaseQuantity(8, event)">+</button>
+                </div>
+                <div class="item-customization" id="custom-8">
+                    <div class="customization-title">Özelleştir</div>
+                    <div class="customization-option" onclick="addCustomization(8, 'Extra Peynir', 15, event)">
+                        <span class="option-name">Extra Peynir</span>
+                        <span class="option-price positive">+15₺</span>
+                    </div>
+                    <div class="customization-option" onclick="addCustomization(8, 'Bacon', 20, event)">
+                        <span class="option-name">Bacon</span>
+                        <span class="option-price positive">+20₺</span>
+                    </div>
+                    <div class="customization-option" onclick="addCustomization(8, 'Soğan Halkası', 10, event)">
+                        <span class="option-name">Soğan Halkası</span>
+                        <span class="option-price positive">+10₺</span>
+                    </div>
+                    <div class="customization-option" onclick="addCustomization(8, 'Patates Çıkar', -15, event)">
+                        <span class="option-name">Patates Çıkar</span>
+                        <span class="option-price negative">-15₺</span>
+                    </div>
+                </div>
+                <button class="customize-button" onclick="toggleCustomization(8, event)">Özelleştir</button>
+                <button class="add-to-cart-button active" id="add-8" onclick="addToCartWithCustomization(8, event)">Ekle</button>
+            </div>
+        </div>
+        
+        <div class="cart-section">
+            <div class="cart-title">
+                <svg class="cart-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m6-5v8a2 2 0 01-2 2H9a2 2 0 01-2-2v-8m8 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01"/>
+                </svg>
+                Sepetiniz
+            </div>
+            <div id="cartItems">
+                <div class="empty-cart">✨ Sipariş vermek için ürünlere dokunun</div>
+            </div>
+            
+            <button class="order-button" id="orderButton" onclick="sendOrder()" disabled>
+                Siparişi Gönder (0₺)
+            </button>
+        </div>
+        
+        <div class="waiter-section">
+            <button class="waiter-button" id="waiterButton" onclick="callWaiter()">
+                <svg class="waiter-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span>Garson Çağır</span>
+            </button>
+            <div class="waiter-status" id="waiterStatus"></div>
+        </div>
+        
+        <div class="footer">
+            <div><strong>Tap-to-Order Interface</strong></div>
+            <div>QR Menü Sistemi - Professional UX</div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const CONFIG = {
+            cafeName: "Tap Café",
+            tableNumber: 7,
+            currency: "₺"
+        };
+        
+        // Global state
+        let cart = {};
+        let currentQuantities = {};
+        let pendingCustomizations = {};
+        
+        // Menu data with customization types and requirements
+        const menuItems = {
+            1: { name: "Çay", price: 30, category: "Sıcak İçecekler", customizationType: "single", required: false },
+            2: { name: "Türk Kahvesi", price: 70, category: "Sıcak İçecekler", customizationType: "single", required: true },
+            3: { name: "Cappucino", price: 100, category: "Espresso Kahveler", customizationType: "multiple", required: false },
+            4: { name: "Latte", price: 100, category: "Espresso Kahveler", customizationType: "multiple", required: false },
+            5: { name: "Ice Tea", price: 70, category: "Soğuk İçecekler", customizationType: "single", required: true },
+            6: { name: "Ayran", price: 25, category: "Soğuk İçecekler", customizationType: "none", required: false },
+            7: { name: "Kaşarlı Tost", price: 80, category: "Aperatifler", customizationType: "multiple", required: false },
+            8: { name: "Hamburger", price: 175, category: "Aperatifler", customizationType: "multiple", required: false },
+            9: { name: "Sahlep", price: 70, category: "Sıcak İçecekler", customizationType: "multiple", required: false },
+            10: { name: "Limonata", price: 75, category: "Soğuk İçecekler", customizationType: "none", required: false }
+        };
+        
+        // Initialize quantities
+        function initializeQuantities() {
+            for (let itemId in menuItems) {
+                currentQuantities[itemId] = 1;
+                pendingCustomizations[itemId] = {};
+            }
+        }
+        
+        // Close all quantity controls except the specified one
+        function closeOtherQuantityControls(exceptItemId = null) {
+            for (let itemId in menuItems) {
+                if (itemId != exceptItemId) {
+                    const controls = document.getElementById(`controls-${itemId}`);
+                    if (controls && controls.classList.contains('show')) {
+                        // Check if this item exists in cart
+                        const hasInCart = Object.values(cart).some(item => item.id == itemId);
+                        if (!hasInCart) {
+                            controls.classList.remove('show');
+                            currentQuantities[itemId] = 1;
+                            updateQuantityDisplay(itemId);
+                        }
+                    }
+                    
+                    // Close customization panels
+                    const customDiv = document.getElementById(`custom-${itemId}`);
+                    if (customDiv && customDiv.classList.contains('show')) {
+                        customDiv.classList.remove('show');
+                        const button = document.querySelector(`[data-id="${itemId}"] .customize-button`);
+                        if (button) button.textContent = 'Özelleştir';
+                    }
+                }
+            }
+        }
+        
+        // Add global click handler to close controls when clicking elsewhere
+        document.addEventListener('click', function(event) {
+            const clickedItem = event.target.closest('.menu-item');
+            if (!clickedItem) {
+                closeOtherQuantityControls();
+            }
+        });
+        
+        // Tap to order
+        function tapToOrder(itemId) {
+            const menuItem = document.querySelector(`[data-id="${itemId}"]`);
+            
+            if (navigator.vibrate) {
+                navigator.vibrate(50);
+            }
+            
+            menuItem.classList.add('ripple');
+            setTimeout(() => menuItem.classList.remove('ripple'), 600);
+            
+            // Close other controls first
+            closeOtherQuantityControls(itemId);
+            
+            const quantityControls = document.getElementById(`controls-${itemId}`);
+            if (quantityControls) {
+                quantityControls.classList.add('show');
+            }
+            
+            // For items without customization, add directly
+            const item = menuItems[itemId];
+            if (item.customizationType === "none") {
+                addToCartWithCustomization(itemId, { stopPropagation: () => {} });
+            }
+        }
+        
+        // Generate unique key for cart items
+        function generateItemKey(itemId, customizations) {
+            const customString = Object.entries(customizations || {})
+                .sort()
+                .map(([key, value]) => `${key}:${value}`)
+                .join('|');
+            return `${itemId}_${customString}`;
+        }
+        
+        // Toggle customization panel
+        function toggleCustomization(itemId, event) {
+            event.stopPropagation();
+            const customDiv = document.getElementById(`custom-${itemId}`);
+            const button = event.target;
+            
+            if (customDiv.classList.contains('show')) {
+                customDiv.classList.remove('show');
+                button.textContent = 'Özelleştir';
+            } else {
+                // Close other customization panels
+                document.querySelectorAll('.item-customization.show').forEach(div => {
+                    if (div.id !== `custom-${itemId}`) {
+                        div.classList.remove('show');
+                        const btn = div.parentElement.querySelector('.customize-button');
+                        if (btn) btn.textContent = 'Özelleştir';
+                    }
+                });
+                
+                customDiv.classList.add('show');
+                button.textContent = 'Kapat';
+            }
+        }
+        
+        // Add customization with type-aware logic
+        function addCustomization(itemId, optionName, price, event) {
+            event.stopPropagation();
+            
+            if (!pendingCustomizations[itemId]) {
+                pendingCustomizations[itemId] = {};
+            }
+            
+            const item = menuItems[itemId];
+            const customizationType = item.customizationType;
+            
+            if (customizationType === "single") {
+                // Single choice - clear others and select this one
+                pendingCustomizations[itemId] = {};
+                pendingCustomizations[itemId][optionName] = price;
+                
+                // Update all option visuals
+                const customDiv = document.getElementById(`custom-${itemId}`);
+                if (customDiv) {
+                    const options = customDiv.querySelectorAll('.customization-option');
+                    options.forEach(option => option.classList.remove('selected'));
+                }
+                event.currentTarget.classList.add('selected');
+                
+            } else if (customizationType === "multiple") {
+                // Multiple choice - toggle this option
+                if (pendingCustomizations[itemId][optionName]) {
+                    delete pendingCustomizations[itemId][optionName];
+                    event.currentTarget.classList.remove('selected');
+                } else {
+                    pendingCustomizations[itemId][optionName] = price;
+                    event.currentTarget.classList.add('selected');
+                }
+            }
+            
+            updateItemPrice(itemId);
+            updateSelectedCustomizations(itemId);
+            updateAddButton(itemId);
+        }
+        
+        // Update "Ekle" button state
+        function updateAddButton(itemId) {
+            const addButton = document.getElementById(`add-${itemId}`);
+            const item = menuItems[itemId];
+            const hasCustomizations = Object.keys(pendingCustomizations[itemId] || {}).length > 0;
+            
+            if (addButton) {
+                if (item.customizationType === "none" || !item.required || hasCustomizations) {
+                    addButton.classList.add('active');
+                } else {
+                    addButton.classList.remove('active');
+                }
+            }
+        }
+        
+        // Add to cart with customization
+        function addToCartWithCustomization(itemId, event) {
+            event.stopPropagation();
+            
+            const quantity = currentQuantities[itemId];
+            const customizations = { ...pendingCustomizations[itemId] };
+            const itemKey = generateItemKey(itemId, customizations);
+            
+            if (!cart[itemKey]) {
+                cart[itemKey] = {
+                    id: itemId,
+                    quantity: 0,
+                    customizations: customizations,
+                    basePrice: menuItems[itemId].price
+                };
+            }
+            cart[itemKey].quantity += quantity;
+            
+            // Reset for next order
+            currentQuantities[itemId] = 1;
+            pendingCustomizations[itemId] = {};
+            updateQuantityDisplay(itemId);
+            updateSelectedCustomizations(itemId);
+            updateItemPrice(itemId);
+            updateAddButton(itemId);
+            
+            // Reset visual states
+            const customDiv = document.getElementById(`custom-${itemId}`);
+            if (customDiv) {
+                const options = customDiv.querySelectorAll('.customization-option');
+                options.forEach(option => option.classList.remove('selected'));
+                customDiv.classList.remove('show');
+                const button = document.querySelector(`[data-id="${itemId}"] .customize-button`);
+                if (button) button.textContent = 'Özelleştir';
+            }
+            
+            updateItemVisual(itemId);
+            updateCartItemsSummary(itemId);
+            updateCartDisplay();
+            
+            const menuItem = document.querySelector(`[data-id="${itemId}"]`);
+            menuItem.classList.add('success-flash');
+            setTimeout(() => menuItem.classList.remove('success-flash'), 600);
+            
+            if (navigator.vibrate) {
+                navigator.vibrate(100);
+            }
+        }
+        
+        // Increase quantity
+        function increaseQuantity(itemId, event) {
+            event.stopPropagation();
+            
+            // If customizations exist and required, auto-add to cart
+            const item = menuItems[itemId];
+            const hasCustomizations = Object.keys(pendingCustomizations[itemId] || {}).length > 0;
+            
+            if (hasCustomizations || !item.required) {
+                addToCartWithCustomization(itemId, event);
+                return;
+            }
+            
+            currentQuantities[itemId]++;
+            updateQuantityDisplay(itemId);
+        }
+        
+        // Decrease quantity
+        function decreaseQuantity(itemId, event) {
+            event.stopPropagation();
+            
+            const cartItemsWithId = Object.entries(cart).filter(([key, item]) => item.id == itemId);
+            
+            if (cartItemsWithId.length > 0) {
+                const [keyToRemove] = cartItemsWithId[cartItemsWithId.length - 1];
+                const cartItem = cart[keyToRemove];
+                
+                if (cartItem.quantity > 1) {
+                    cartItem.quantity--;
+                } else {
+                    delete cart[keyToRemove];
+                }
+                
+                updateItemVisual(itemId);
+                updateCartItemsSummary(itemId);
+                updateCartDisplay();
+                
+                const menuItem = document.querySelector(`[data-id="${itemId}"]`);
+                menuItem.style.transform = 'translateX(-4px)';
+                setTimeout(() => menuItem.style.transform = '', 200);
+                
+                const remainingItems = Object.values(cart).filter(item => item.id == itemId);
+                if (remainingItems.length === 0) {
+                    const quantityControls = document.getElementById(`controls-${itemId}`);
+                    if (quantityControls) {
+                        quantityControls.classList.remove('show');
+                    }
+                    currentQuantities[itemId] = 1;
+                    updateQuantityDisplay(itemId);
+                    updateCartItemsSummary(itemId);
+                }
+            } else if (currentQuantities[itemId] > 1) {
+                // If not in cart, just decrease display quantity
+                currentQuantities[itemId]--;
+                updateQuantityDisplay(itemId);
+            } else {
+                // If quantity is 1 and not in cart, hide controls
+                const quantityControls = document.getElementById(`controls-${itemId}`);
+                if (quantityControls) {
+                    quantityControls.classList.remove('show');
+                }
+            }
+        }
+        
+        // Update quantity display
+        function updateQuantityDisplay(itemId) {
+            const quantityDisplay = document.getElementById(`quantity-${itemId}`);
+            if (quantityDisplay) {
+                quantityDisplay.textContent = currentQuantities[itemId];
+            }
+        }
+        
+        // Update item price
+        function updateItemPrice(itemId) {
+            const basePrice = menuItems[itemId].price;
+            const customPrice = Object.values(pendingCustomizations[itemId] || {}).reduce((sum, price) => sum + price, 0);
+            const totalPrice = basePrice + customPrice;
+            
+            const priceElement = document.getElementById(`price-${itemId}`);
+            if (customPrice !== 0) {
+                priceElement.innerHTML = `${totalPrice}₺ <small style="text-decoration: line-through; opacity: 0.6;">${basePrice}₺</small>`;
+            } else {
+                priceElement.textContent = `${basePrice}₺`;
+            }
+        }
+        
+        // Update selected customizations display
+        function updateSelectedCustomizations(itemId) {
+            const selectedDiv = document.getElementById(`selected-${itemId}`);
+            const itemsDiv = document.getElementById(`selected-items-${itemId}`);
+            
+            if (!selectedDiv || !itemsDiv) return;
+            
+            const customizations = pendingCustomizations[itemId] || {};
+            const customItems = Object.keys(customizations);
+            
+            if (customItems.length > 0) {
+                itemsDiv.textContent = customItems.join(', ');
+                selectedDiv.classList.add('show');
+            } else {
+                selectedDiv.classList.remove('show');
+            }
+        }
+        
+        // Update cart items summary for each product
+        function updateCartItemsSummary(itemId) {
+            const summaryDiv = document.getElementById(`cart-summary-${itemId}`);
+            const previewDiv = document.getElementById(`cart-items-preview-${itemId}`);
+            
+            if (!summaryDiv || !previewDiv) return;
+            
+            const cartItemsWithId = Object.entries(cart).filter(([key, item]) => item.id == itemId);
+            
+            if (cartItemsWithId.length > 0) {
+                let previewHTML = '';
+                cartItemsWithId.forEach(([key, cartItem], index) => {
+                    const customDisplay = Object.keys(cartItem.customizations).length > 0 
+                        ? ` (${Object.keys(cartItem.customizations).join(', ')})`
+                        : '';
+                    previewHTML += `<div class="cart-item-preview">${index + 1}. ${menuItems[itemId].name}${customDisplay} × ${cartItem.quantity}</div>`;
+                });
+                previewDiv.innerHTML = previewHTML;
+                summaryDiv.classList.add('show');
+            } else {
+                summaryDiv.classList.remove('show');
+            }
+        }
+        
+        // Update item visual state
+        function updateItemVisual(itemId) {
+            const menuItem = document.querySelector(`[data-id="${itemId}"]`);
+            const badge = document.getElementById(`badge-${itemId}`);
+            
+            const totalQuantity = Object.values(cart)
+                .filter(item => item.id == itemId)
+                .reduce((sum, item) => sum + item.quantity, 0);
+            
+            if (totalQuantity > 0) {
+                menuItem.classList.add('selected');
+                badge.textContent = totalQuantity;
+                badge.classList.add('show');
+            } else {
+                menuItem.classList.remove('selected');
+                badge.classList.remove('show');
+            }
+        }
+        
+        // Update cart display
+        function updateCartDisplay() {
+            const cartItemsDiv = document.getElementById('cartItems');
+            const cartTotal = document.getElementById('cartTotal');
+            const cartCount = document.getElementById('cartCount');
+            const orderButton = document.getElementById('orderButton');
+            const resetButton = document.getElementById('resetCart');
+            
+            let totalPrice = 0;
+            let totalItems = 0;
+            let cartHTML = '';
+            
+            if (Object.keys(cart).length === 0) {
+                cartHTML = '<div class="empty-cart">✨ Sipariş vermek için ürünlere dokunun</div>';
+                orderButton.disabled = true;
+                orderButton.textContent = `Siparişi Gönder (0${CONFIG.currency})`;
+                resetButton.classList.remove('show');
+            } else {
+                // Group items by product id for numbering
+                const groupedItems = {};
+                for (let itemKey in cart) {
+                    const cartItem = cart[itemKey];
+                    if (!groupedItems[cartItem.id]) {
+                        groupedItems[cartItem.id] = [];
+                    }
+                    groupedItems[cartItem.id].push({ key: itemKey, item: cartItem });
+                }
+                
+                for (let itemId in groupedItems) {
+                    const items = groupedItems[itemId];
+                    items.forEach(({ key: itemKey, item: cartItem }, index) => {
+                        const quantity = cartItem.quantity;
+                        const menuItem = menuItems[cartItem.id];
+                        
+                        const customPrice = Object.values(cartItem.customizations).reduce((sum, price) => sum + price, 0);
+                        const itemPrice = cartItem.basePrice + customPrice;
+                        const itemTotal = quantity * itemPrice;
+                        
+                        const customDisplay = Object.keys(cartItem.customizations).length > 0 
+                            ? Object.entries(cartItem.customizations)
+                                .map(([name, price]) => name)
+                                .join(', ')
+                            : '';
+                        
+                        const itemNumber = items.length > 1 ? `${index + 1}. ` : '';
+                        
+                        cartHTML += `
+                            <div class="cart-item" onclick="removeFromCart('${itemKey}')">
+                                <div>
+                                    <div class="cart-item-name">${itemNumber}${menuItem.name} × ${quantity}</div>
+                                    ${customDisplay ? `<div class="cart-item-details">${customDisplay}</div>` : ''}
+                                </div>
+                                <div class="cart-item-price">${itemTotal}${CONFIG.currency}</div>
+                            </div>
+                        `;
+                        
+                        totalPrice += itemTotal;
+                        totalItems += quantity;
+                    });
+                }
+                
+                cartHTML += `
+                    <div class="cart-item">
+                        <span><strong>TOPLAM</strong></span>
+                        <span><strong>${totalPrice}${CONFIG.currency}</strong></span>
+                    </div>
+                `;
+                
+                orderButton.disabled = false;
+                orderButton.textContent = `Siparişi Gönder (${totalPrice}${CONFIG.currency})`;
+                resetButton.classList.add('show');
+            }
+            
+            cartItemsDiv.innerHTML = cartHTML;
+            cartTotal.textContent = totalPrice;
+            cartCount.textContent = totalItems;
+        }
+        
+        // Remove from cart
+        function removeFromCart(itemKey) {
+            const cartItem = cart[itemKey];
+            const itemId = cartItem.id;
+            
+            delete cart[itemKey];
+            
+            updateItemVisual(itemId);
+            updateCartItemsSummary(itemId);
+            updateCartDisplay();
+            
+            const cartSection = document.querySelector('.cart-section');
+            cartSection.style.transform = 'translateX(-4px)';
+            setTimeout(() => cartSection.style.transform = '', 200);
+        }
+        
+        // Clear cart
+        function clearCart() {
+            if (Object.keys(cart).length === 0) return;
+            
+            if (confirm('Sepeti temizlemek istediğinizden emin misiniz?')) {
+                cart = {};
+                initializeQuantities();
+                
+                for (let i = 1; i <= 10; i++) {
+                    updateItemVisual(i);
+                    updateItemPrice(i);
+                    updateSelectedCustomizations(i);
+                    updateCartItemsSummary(i);
+                    updateAddButton(i);
+                    
+                    const controls = document.getElementById(`controls-${i}`);
+                    if (controls) controls.classList.remove('show');
+                    
+                    const customDiv = document.getElementById(`custom-${i}`);
+                    if (customDiv) {
+                        customDiv.classList.remove('show');
+                        const options = customDiv.querySelectorAll('.customization-option');
+                        options.forEach(option => option.classList.remove('selected'));
+                    }
+                    
+                    const button = document.querySelector(`[data-id="${i}"] .customize-button`);
+                    if (button) button.textContent = 'Özelleştir';
+                }
+                
+                updateCartDisplay();
+            }
+        }
+        
+        // Initialize reset button event listener
+        function initializeResetButton() {
+            const resetButton = document.getElementById('resetCart');
+            if (resetButton) {
+                resetButton.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    clearCart();
+                });
+            }
+        }
+        
+        // Send order
+        function sendOrder() {
+            if (Object.keys(cart).length === 0) {
+                alert("Sepetiniz boş!");
+                return;
+            }
+            
+            const orderButton = document.getElementById('orderButton');
+            orderButton.classList.add('loading');
+            orderButton.textContent = 'Gönderiliyor...';
+            
+            setTimeout(() => {
+                let orderText = "🎉 SİPARİŞ GÖNDERİLDİ!\n\n";
+                orderText += `📍 ${CONFIG.cafeName} - Masa ${CONFIG.tableNumber}\n`;
+                orderText += "⏰ " + new Date().toLocaleTimeString('tr-TR') + "\n\n";
+                orderText += "📋 SİPARİŞ DETAYI:\n";
+                orderText += "━━━━━━━━━━━━━━━━━━━━\n";
+                
+                let total = 0;
+                
+                // Group items by product id for better ordering display
+                const groupedItems = {};
+                for (let itemKey in cart) {
+                    const cartItem = cart[itemKey];
+                    if (!groupedItems[cartItem.id]) {
+                        groupedItems[cartItem.id] = [];
+                    }
+                    groupedItems[cartItem.id].push({ key: itemKey, item: cartItem });
+                }
+                
+                for (let itemId in groupedItems) {
+                    const items = groupedItems[itemId];
+                    items.forEach(({ key: itemKey, item: cartItem }, index) => {
+                        const quantity = cartItem.quantity;
+                        const menuItem = menuItems[cartItem.id];
+                        
+                        const customPrice = Object.values(cartItem.customizations).reduce((sum, price) => sum + price, 0);
+                        const itemPrice = cartItem.basePrice + customPrice;
+                        const itemTotal = quantity * itemPrice;
+                        
+                        const itemNumber = items.length > 1 ? `${index + 1}. ` : '';
+                        orderText += `• ${itemNumber}${menuItem.name} × ${quantity}\n`;
+                        
+                        if (Object.keys(cartItem.customizations).length > 0) {
+                            const customList = Object.entries(cartItem.customizations)
+                                .map(([name, price]) => `  ↳ ${name}${price > 0 ? ` (+${price}₺)` : price < 0 ? ` (${price}₺)` : ''}`)
+                                .join('\n');
+                            orderText += `${customList}\n`;
+                        }
+                        
+                        orderText += `  💰 ${itemTotal}₺\n\n`;
+                        total += itemTotal;
+                    });
+                }
+                
+                orderText += "━━━━━━━━━━━━━━━━━━━━\n";
+                orderText += `💳 TOPLAM: ${total}₺\n\n`;
+                orderText += "🔔 Siparişiniz hazırlanıyor!\n";
+                orderText += "📱 Garson masanıza gelecek.";
+                
+                alert(orderText);
+                
+                // Reset everything
+                cart = {};
+                initializeQuantities();
+                
+                for (let i = 1; i <= 10; i++) {
+                    updateItemVisual(i);
+                    updateItemPrice(i);
+                    updateSelectedCustomizations(i);
+                    updateCartItemsSummary(i);
+                    updateAddButton(i);
+                    
+                    const controls = document.getElementById(`controls-${i}`);
+                    if (controls) controls.classList.remove('show');
+                    
+                    const customDiv = document.getElementById(`custom-${i}`);
+                    if (customDiv) {
+                        customDiv.classList.remove('show');
+                        const options = customDiv.querySelectorAll('.customization-option');
+                        options.forEach(option => option.classList.remove('selected'));
+                    }
+                    
+                    const button = document.querySelector(`[data-id="${i}"] .customize-button`);
+                    if (button) button.textContent = 'Özelleştir';
+                }
+                
+                updateCartDisplay();
+                orderButton.classList.remove('loading');
+            }, 1500);
+        }
+        
+        // Call waiter function
+        function callWaiter() {
+            const waiterButton = document.getElementById('waiterButton');
+            const waiterStatus = document.getElementById('waiterStatus');
+            
+            // Disable button and show loading
+            waiterButton.disabled = true;
+            waiterButton.innerHTML = `
+                <svg class="waiter-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+                <span>Gönderiliyor...</span>
+            `;
+            
+            // Simulate API call
+            setTimeout(() => {
+                waiterStatus.innerHTML = `
+                    <div style="color: var(--success); font-weight: 600;">
+                        ✅ Garson çağrısı gönderildi!
+                    </div>
+                    <div style="font-size: 12px; margin-top: 4px;">
+                        Garson masanıza gelecek
+                    </div>
+                `;
+                
+                // Reset button after 5 seconds
+                setTimeout(() => {
+                    waiterButton.disabled = false;
+                    waiterButton.innerHTML = `
+                        <svg class="waiter-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <span>Garson Çağır</span>
+                    `;
+                    waiterStatus.innerHTML = '';
+                }, 5000);
+                
+                // Haptic feedback
+                if (navigator.vibrate) {
+                    navigator.vibrate(200);
+                }
+                
+                // Show success message
+                alert(`🔔 Garson çağrısı gönderildi!\n\n📍 ${CONFIG.cafeName} - Masa ${CONFIG.tableNumber}\n⏰ ${new Date().toLocaleTimeString('tr-TR')}\n\nGarson masanıza gelecek.`);
+                
+            }, 1000);
+        }
+        
+        // Initialize app
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const tableNumber = urlParams.get('masa') || CONFIG.tableNumber;
+            const cafeName = urlParams.get('cafe') || CONFIG.cafeName;
+            
+            document.getElementById('tableInfo').textContent = `Masa ${tableNumber} - QR Menü`;
+            document.getElementById('cafeName').textContent = cafeName;
+            
+            initializeQuantities();
+            initializeResetButton(); // Reset button event listener
+            
+            for (let i = 1; i <= 10; i++) {
+                updateAddButton(i);
+                updateCartItemsSummary(i);
+            }
+            
+            updateCartDisplay();
+            document.documentElement.style.scrollBehavior = 'smooth';
+        }
+    </script>
+</body>
+</html>

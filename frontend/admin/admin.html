@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Paneli - QR Menü</title>
+    <link rel="stylesheet" href="styles/admin.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div id="app">
+        <!-- Login Screen -->
+        <div id="login-screen" class="login-screen">
+            <div class="login-container">
+                <div class="login-header">
+                    <h1>QR Menü Admin</h1>
+                    <p>Yönetim paneline giriş yapın</p>
+                </div>
+                <form id="login-form" class="login-form">
+                    <div class="form-group">
+                        <label for="username">Kullanıcı Adı</label>
+                        <input type="text" id="username" name="username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Şifre</label>
+                        <input type="password" id="password" name="password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Giriş Yap</button>
+                </form>
+                <div id="login-error" class="error-message"></div>
+            </div>
+        </div>
+
+        <!-- Main Dashboard -->
+        <div id="dashboard" class="dashboard" style="display: none;">
+            <!-- Header -->
+            <header class="dashboard-header">
+                <div class="header-left">
+                    <h1>QR Menü Admin Paneli</h1>
+                    <p id="restaurant-name">Restoran Adı</p>
+                </div>
+                <div class="header-right">
+                    <div class="user-info">
+                        <span id="current-user">Admin</span>
+                        <button class="btn btn-secondary" onclick="logout()">Çıkış</button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Navigation -->
+            <nav class="dashboard-nav">
+                <button class="nav-btn active" data-tab="orders">
+                    <i class="fas fa-list"></i>
+                    Siparişler
+                </button>
+                <button class="nav-btn" data-tab="tables">
+                    <i class="fas fa-chair"></i>
+                    Masalar
+                </button>
+                <button class="nav-btn" data-tab="menu">
+                    <i class="fas fa-utensils"></i>
+                    Menü
+                </button>
+                <button class="nav-btn" data-tab="analytics">
+                    <i class="fas fa-chart-bar"></i>
+                    İstatistikler
+                </button>
+                <button class="nav-btn" data-tab="settings">
+                    <i class="fas fa-cog"></i>
+                    Ayarlar
+                </button>
+            </nav>
+
+            <!-- Main Content -->
+            <main class="dashboard-content">
+                <!-- Orders Tab -->
+                <div id="orders-tab" class="tab-content active">
+                    <div class="tab-header">
+                        <h2>Siparişler</h2>
+                        <div class="tab-actions">
+                            <button class="btn btn-primary" onclick="refreshOrders()">
+                                <i class="fas fa-sync"></i> Yenile
+                            </button>
+                        </div>
+                    </div>
+                    <div class="orders-container" id="orders-container">
+                        <!-- Siparişler dinamik olarak yüklenecek -->
+                    </div>
+                </div>
+
+                <!-- Tables Tab -->
+                <div id="tables-tab" class="tab-content">
+                    <div class="tab-header">
+                        <h2>Masa Yönetimi</h2>
+                        <div class="tab-actions">
+                            <button class="btn btn-primary" onclick="addTable()">
+                                <i class="fas fa-plus"></i> Masa Ekle
+                            </button>
+                        </div>
+                    </div>
+                    <div class="tables-container" id="tables-container">
+                        <!-- Masalar dinamik olarak yüklenecek -->
+                    </div>
+                </div>
+
+                <!-- Menu Tab -->
+                <div id="menu-tab" class="tab-content">
+                    <div class="tab-header">
+                        <h2>Menü Yönetimi</h2>
+                        <div class="tab-actions">
+                            <button class="btn btn-primary" onclick="addCategory()">
+                                <i class="fas fa-plus"></i> Kategori Ekle
+                            </button>
+                            <button class="btn btn-primary" onclick="addMenuItem()">
+                                <i class="fas fa-plus"></i> Ürün Ekle
+                            </button>
+                        </div>
+                    </div>
+                    <div class="menu-container" id="menu-container">
+                        <!-- Menü dinamik olarak yüklenecek -->
+                    </div>
+                </div>
+
+                <!-- Analytics Tab -->
+                <div id="analytics-tab" class="tab-content">
+                    <div class="tab-header">
+                        <h2>İstatistikler</h2>
+                        <div class="tab-actions">
+                            <button class="btn btn-primary" onclick="refreshAnalytics()">
+                                <i class="fas fa-sync"></i> Yenile
+                            </button>
+                        </div>
+                    </div>
+                    <div class="analytics-container" id="analytics-container">
+                        <!-- İstatistikler dinamik olarak yüklenecek -->
+                    </div>
+                </div>
+
+                <!-- Settings Tab -->
+                <div id="settings-tab" class="tab-content">
+                    <div class="tab-header">
+                        <h2>Ayarlar</h2>
+                    </div>
+                    <div class="settings-container" id="settings-container">
+                        <!-- Ayarlar dinamik olarak yüklenecek -->
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- Modals -->
+        <div id="modal-overlay" class="modal-overlay" style="display: none;">
+            <div class="modal">
+                <div class="modal-header">
+                    <h3 id="modal-title">Modal Başlığı</h3>
+                    <button class="modal-close" onclick="closeModal()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body" id="modal-body">
+                    <!-- Modal içeriği dinamik olarak yüklenecek -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Notifications -->
+        <div id="notifications" class="notifications">
+            <!-- Bildirimler dinamik olarak eklenecek -->
+        </div>
+
+        <!-- Loading Spinner -->
+        <div id="loading-spinner" class="loading-spinner" style="display: none;">
+            <div class="spinner"></div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="scripts/admin-utils.js"></script>
+    <script src="scripts/admin.js"></script>
+    <script src="scripts/admin-realtime.js"></script>
+</body>
+</html> 

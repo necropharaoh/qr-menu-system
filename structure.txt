@@ -1,0 +1,135 @@
+qr-menu-system/
+├── frontend/
+│   ├── menu/                    # QR menü sayfası (her masa için dinamik)
+│   │   ├── customer.html        # Müşteri ana sayfası (QR menü)
+│   │   ├── [tableId].html      # Dinamik masa sayfaları
+│   │   ├── styles/
+│   │   │   ├── main.css
+│   │   │   ├── menu.css
+│   │   │   └── mobile.css      # Mobil optimizasyon
+│   │   ├── scripts/
+│   │   │   ├── menu.js
+│   │   │   ├── cart.js
+│   │   │   ├── websocket.js
+│   │   │   ├── waiter-call.js  # Garson çağırma sistemi
+│   │   │   └── utils.js
+│   │   └── assets/
+│   │       ├── images/
+│   │       └── icons/
+│   └── admin/                   # Admin paneli (Desktop odaklı)
+│       ├── admin.html           # Admin paneli ana sayfası
+│       ├── dashboard.html      # (Gelişmiş panel için, opsiyonel)
+│       ├── menu-editor.html    # Menü düzenleme
+│       ├── orders.html         # Sipariş yönetimi
+│       ├── analytics.html      # İstatistikler
+│       ├── tables.html         # Masa yönetimi
+│       ├── settings.html       # Kafe ayarları
+│       ├── styles/
+│       │   ├── admin.css
+│       │   ├── dashboard.css
+│       │   ├── components.css
+│       │   └── notifications.css
+│       ├── scripts/
+│       │   ├── admin.js
+│       │   ├── dashboard.js
+│       │   ├── menu-editor.js
+│       │   ├── orders.js
+│       │   ├── analytics.js
+│       │   ├── websocket.js
+│       │   ├── notifications.js
+│       │   └── sound-alerts.js  # Ses bildirimleri
+│       └── assets/
+│           ├── images/
+│           ├── icons/
+│           └── sounds/          # Bildirim sesleri
+├── backend/
+│   ├── server.js               # Ana server
+│   ├── app.js                  # Express app konfigürasyonu
+│   ├── config/
+│   │   ├── database.js
+│   │   ├── websocket.js
+│   │   └── environment.js
+│   ├── routes/
+│   │   ├── auth.js
+│   │   ├── menu.js
+│   │   ├── orders.js
+│   │   ├── analytics.js
+│   │   ├── tables.js
+│   │   ├── restaurant.js
+│   │   ├── waiter.js           # Garson çağırma API'si
+│   │   └── websocket.js
+│   ├── models/
+│   │   ├── Restaurant.js
+│   │   ├── Menu.js
+│   │   ├── MenuItem.js
+│   │   ├── Order.js
+│   │   ├── OrderItem.js
+│   │   ├── Table.js
+│   │   ├── User.js
+│   │   └── WaiterCall.js       # Garson çağırma modeli
+│   ├── middleware/
+│   │   ├── auth.js
+│   │   ├── validation.js
+│   │   ├── cors.js
+│   │   └── rateLimit.js
+│   ├── services/
+│   │   ├── notificationService.js
+│   │   ├── analyticsService.js
+│   │   ├── menuService.js
+│   │   ├── orderService.js
+│   │   └── waiterService.js    # Garson çağırma servisi
+│   ├── utils/
+│   │   ├── database.js
+│   │   ├── socket.js
+│   │   ├── logger.js
+│   │   ├── helpers.js
+│   │   └── validators.js
+│   └── websocket/
+│       ├── socketManager.js
+│       ├── orderHandler.js
+│       └── waiterHandler.js    # Garson çağırma WebSocket
+├── database/
+│   ├── schema.sql
+│   ├── migrations/
+│   │   ├── 001_initial_schema.sql
+│   │   ├── 002_add_waiter_calls.sql
+│   │   └── 003_add_analytics.sql
+│   └── seeds/
+│       ├── default_menu.sql
+│       └── sample_data.sql
+├── deployment/
+│   ├── docker-compose.yml
+│   ├── Dockerfile
+│   ├── nginx.conf
+│   └── ssl/
+├── docs/
+│   ├── API.md
+│   ├── SETUP.md
+│   └── DEPLOYMENT.md
+├── tests/
+│   ├── unit/
+│   ├── integration/
+│   └── e2e/
+├── package.json
+├── package-lock.json
+└── README.md
+
+# BASİT NOTIFICATION SİSTEMİ
+
+## 📱 MOBİL (QR Menü):
+- **Garson Çağırma Butonu**: Müşteri garson istediğinde admin'e bildirim
+- **Sipariş Onayı**: Sadece ekranda "Siparişiniz alındı" mesajı (notification değil)
+
+## 🖥️ DESKTOP (Admin Panel):
+- **Yeni Sipariş Bildirimi**: Ses + ekran bildirimi
+- **Garson Çağırma Bildirimi**: Ses + ekran bildirimi
+
+## 🔔 BİLDİRİM TÜRLERİ:
+- **In-App Notifications**: Panel içi bildirimler
+- **Sound Alerts**: Ses bildirimleri (admin panel)
+- **Visual Indicators**: Renk değişimleri, animasyonlar
+
+## 👤 TEK ADMIN:
+- Basit kullanıcı yönetimi
+- Tek admin hesabı
+- Temel yetkilendirme

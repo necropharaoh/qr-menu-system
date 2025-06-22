@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Menü</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/menu.css">
+    <link rel="stylesheet" href="styles/mobile.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="restaurant-info">
+                <h1 id="restaurant-name">QR Menü Restoran</h1>
+                <p id="restaurant-address">Örnek Adres</p>
+            </div>
+            <div class="table-info">
+                <span class="table-number">Masa <span id="table-number">1</span></span>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="category-nav">
+            <div class="category-list" id="category-list">
+                <!-- Kategoriler dinamik olarak yüklenecek -->
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Menu Items -->
+            <div class="menu-container" id="menu-container">
+                <!-- Menü öğeleri dinamik olarak yüklenecek -->
+            </div>
+
+            <!-- Cart Sidebar -->
+            <div class="cart-sidebar" id="cart-sidebar">
+                <div class="cart-header">
+                    <h3>Sepetiniz</h3>
+                    <button class="close-cart" id="close-cart">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="cart-items" id="cart-items">
+                    <!-- Sepet öğeleri dinamik olarak yüklenecek -->
+                </div>
+                <div class="cart-footer">
+                    <div class="cart-total">
+                        <span>Toplam:</span>
+                        <span id="cart-total">₺0.00</span>
+                    </div>
+                    <button class="btn btn-primary" id="place-order">
+                        Sipariş Ver
+                    </button>
+                </div>
+            </div>
+        </main>
+
+        <!-- Floating Action Buttons -->
+        <div class="fab-container">
+            <button class="fab fab-cart" id="fab-cart">
+                <i class="fas fa-shopping-cart"></i>
+                <span class="cart-badge" id="cart-badge">0</span>
+            </button>
+            <button class="fab fab-waiter" id="fab-waiter">
+                <i class="fas fa-bell"></i>
+            </button>
+        </div>
+
+        <!-- Order Status Modal -->
+        <div class="modal" id="order-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Sipariş Durumu</h3>
+                    <button class="close-modal" id="close-order-modal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body" id="order-status-content">
+                    <!-- Sipariş durumu dinamik olarak yüklenecek -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Waiter Call Modal -->
+        <div class="modal" id="waiter-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Garson Çağır</h3>
+                    <button class="close-modal" id="close-waiter-modal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>Garson çağırmak istediğinizden emin misiniz?</p>
+                    <div class="modal-actions">
+                        <button class="btn btn-secondary" id="cancel-waiter-call">İptal</button>
+                        <button class="btn btn-primary" id="confirm-waiter-call">Garson Çağır</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div class="loading-spinner" id="loading-spinner">
+            <div class="spinner"></div>
+        </div>
+
+        <!-- Toast Notifications -->
+        <div class="toast-container" id="toast-container">
+            <!-- Toast bildirimleri dinamik olarak eklenecek -->
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="scripts/utils.js"></script>
+    <script src="scripts/menu.js"></script>
+    <script src="scripts/cart.js"></script>
+    <script src="scripts/websocket.js"></script>
+    <script src="scripts/waiter-call.js"></script>
+</body>
+</html> 
