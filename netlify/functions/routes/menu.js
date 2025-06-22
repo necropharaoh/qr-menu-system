@@ -1,12 +1,12 @@
 const express = require('express');
-const { query, get, run } = require('../utils/database');
+const pool = require('../utils/database');
 const router = express.Router();
 
 // Tüm kategorileri getir
 router.get('/categories', async (req, res) => {
   try {
-    const categories = await query('SELECT * FROM categories WHERE active = 1 ORDER BY sort_order, name');
-    res.json(categories);
+    const result = await pool.query('SELECT * FROM categories WHERE status = $1 ORDER BY name', ['active']);
+    res.json(result.rows);
   } catch (error) {
     console.error('Categories error:', error);
     res.status(500).json({ error: 'Veritabanı hatası' });
@@ -22,12 +22,12 @@ router.post('/categories', async (req, res) => {
       return res.status(400).json({ error: 'Kategori adı gerekli' });
     }
 
-    const result = await run(
-      'INSERT INTO categories (name, description, image, sort_order) VALUES (?, ?, ?, ?)',
+    const result = await pool.query(
+      'INSERT INTO categories (name, description, image, sort_order) VALUES ($1, $2, $3, $4) RETURNING id',
       [name, description, image, sort_order || 0]
     );
 
-    res.json({ id: result.id, message: 'Kategori eklendi' });
+    res.json({ id: result.rows[0].id, message: 'Kategori eklendi' });
   } catch (error) {
     console.error('Add category error:', error);
     res.status(500).json({ error: 'Veritabanı hatası' });
@@ -40,12 +40,12 @@ router.put('/categories/:id', async (req, res) => {
     const { id } = req.params;
     const { name, description, image, sort_order, active } = req.body;
 
-    const result = await run(
-      'UPDATE categories SET name = ?, description = ?, image = ?, sort_order = ?, active = ? WHERE id = ?',
+    const result = await pool.query(
+      'UPDATE categories SET name = $1, description = $2, image = $3, sort_order = $4, active = $5 WHERE id = $6 RETURNING *',
       [name, description, image, sort_order, active, id]
     );
 
-    if (result.changes === 0) {
+    if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Kategori bulunamadı' });
     }
 
@@ -61,9 +61,9 @@ router.delete('/categories/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
-    const result = await run('DELETE FROM categories WHERE id = ?', [id]);
+    const result = await pool.query('DELETE FROM categories WHERE id = $1 RETURNING *', [id]);
 
-    if (result.changes === 0) {
+    if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Kategori bulunamadı' });
     }
 
@@ -77,16 +77,14 @@ router.delete('/categories/:id', async (req, res) => {
 // Tüm menü öğelerini getir
 router.get('/items', async (req, res) => {
   try {
-    const query = `
+    const result = await pool.query(`
       SELECT mi.*, c.name as category_name 
       FROM menu_items mi 
       LEFT JOIN categories c ON mi.category_id = c.id 
-      WHERE mi.available = 1 
-      ORDER BY c.sort_order, mi.sort_order, mi.name
-    `;
-    
-    const items = await query(query);
-    res.json(items);
+      WHERE mi.status = $1 
+      ORDER BY c.name, mi.name
+    `, ['available']);
+    res.json(result.rows);
   } catch (error) {
     console.error('Menu items error:', error);
     res.status(500).json({ error: 'Veritabanı hatası' });
@@ -97,13 +95,11 @@ router.get('/items', async (req, res) => {
 router.get('/items/category/:categoryId', async (req, res) => {
   try {
     const { categoryId } = req.params;
-    
-    const items = await query(
-      'SELECT * FROM menu_items WHERE category_id = ? AND available = 1 ORDER BY sort_order, name',
-      [categoryId]
+    const result = await pool.query(
+      'SELECT * FROM menu_items WHERE category_id = $1 AND status = $2 ORDER BY name',
+      [categoryId, 'available']
     );
-
-    res.json(items);
+    res.json(result.rows);
   } catch (error) {
     console.error('Category items error:', error);
     res.status(500).json({ error: 'Veritabanı hatası' });
@@ -119,12 +115,12 @@ router.post('/items', async (req, res) => {
       return res.status(400).json({ error: 'Ad, fiyat ve kategori gerekli' });
     }
 
-    const result = await run(
-      'INSERT INTO menu_items (category_id, name, description, price, image, sort_order) VALUES (?, ?, ?, ?, ?, ?)',
+    const result = await pool.query(
+      'INSERT INTO menu_items (category_id, name, description, price, image, sort_order) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
       [category_id, name, description, price, image, sort_order || 0]
     );
 
-    res.json({ id: result.id, message: 'Menü öğesi eklendi' });
+    res.json({ id: result.rows[0].id, message: 'Menü öğesi eklendi' });
   } catch (error) {
     console.error('Add menu item error:', error);
     res.status(500).json({ error: 'Veritabanı hatası' });
@@ -137,12 +133,12 @@ router.put('/items/:id', async (req, res) => {
     const { id } = req.params;
     const { category_id, name, description, price, image, sort_order, available } = req.body;
 
-    const result = await run(
-      'UPDATE menu_items SET category_id = ?, name = ?, description = ?, price = ?, image = ?, sort_order = ?, available = ? WHERE id = ?',
+    const result = await pool.query(
+      'UPDATE menu_items SET category_id = $1, name = $2, description = $3, price = $4, image = $5, sort_order = $6, available = $7 WHERE id = $8 RETURNING *',
       [category_id, name, description, price, image, sort_order, available, id]
     );
 
-    if (result.changes === 0) {
+    if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Menü öğesi bulunamadı' });
     }
 
@@ -158,9 +154,9 @@ router.delete('/items/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
-    const result = await run('DELETE FROM menu_items WHERE id = ?', [id]);
+    const result = await pool.query('DELETE FROM menu_items WHERE id = $1 RETURNING *', [id]);
 
-    if (result.changes === 0) {
+    if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Menü öğesi bulunamadı' });
     }
 

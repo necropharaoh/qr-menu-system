@@ -1,43 +1,27 @@
 const express = require('express');
-const { query, get } = require('../utils/database');
+const pool = require('../utils/database');
 const router = express.Router();
 
 // Genel istatistikler
 router.get('/overview', async (req, res) => {
   try {
-    // Toplam sipariş sayısı
-    const totalOrders = await get('SELECT COUNT(*) as count FROM orders');
-    
-    // Bugünkü sipariş sayısı
-    const todayOrders = await get('SELECT COUNT(*) as count FROM orders WHERE DATE(created_at) = DATE("now")');
-    
-    // Toplam gelir
-    const totalRevenue = await get('SELECT SUM(total_amount) as total FROM orders WHERE status = "served"');
-    
-    // Bugünkü gelir
-    const todayRevenue = await get('SELECT SUM(total_amount) as total FROM orders WHERE status = "served" AND DATE(created_at) = DATE("now")');
-    
-    // Bekleyen sipariş sayısı
-    const pendingOrders = await get('SELECT COUNT(*) as count FROM orders WHERE status IN ("pending", "preparing", "ready")');
-    
-    // Bekleyen garson çağrısı sayısı
-    const pendingCalls = await get('SELECT COUNT(*) as count FROM waiter_calls WHERE status = "pending"');
-    
-    // Toplam masa sayısı
-    const totalTables = await get('SELECT COUNT(*) as count FROM tables');
-    
-    // Dolu masa sayısı
-    const occupiedTables = await get('SELECT COUNT(*) as count FROM tables WHERE status = "occupied"');
-
+    const totalOrders = await pool.query('SELECT COUNT(*) as count FROM orders');
+    const todayOrders = await pool.query('SELECT COUNT(*) as count FROM orders WHERE created_at::date = CURRENT_DATE');
+    const totalRevenue = await pool.query("SELECT SUM(total_amount) as total FROM orders WHERE status = 'served'");
+    const todayRevenue = await pool.query("SELECT SUM(total_amount) as total FROM orders WHERE status = 'served' AND created_at::date = CURRENT_DATE");
+    const pendingOrders = await pool.query("SELECT COUNT(*) as count FROM orders WHERE status IN ('pending', 'preparing', 'ready')");
+    const pendingCalls = await pool.query("SELECT COUNT(*) as count FROM waiter_calls WHERE status = 'pending'");
+    const totalTables = await pool.query('SELECT COUNT(*) as count FROM tables');
+    const occupiedTables = await pool.query("SELECT COUNT(*) as count FROM tables WHERE status = 'occupied'");
     res.json({
-      total_orders: totalOrders.count,
-      today_orders: todayOrders.count,
-      total_revenue: totalRevenue.total || 0,
-      today_revenue: todayRevenue.total || 0,
-      pending_orders: pendingOrders.count,
-      pending_calls: pendingCalls.count,
-      total_tables: totalTables.count,
-      occupied_tables: occupiedTables.count
+      total_orders: totalOrders.rows[0].count,
+      today_orders: todayOrders.rows[0].count,
+      total_revenue: totalRevenue.rows[0].total || 0,
+      today_revenue: todayRevenue.rows[0].total || 0,
+      pending_orders: pendingOrders.rows[0].count,
+      pending_calls: pendingCalls.rows[0].count,
+      total_tables: totalTables.rows[0].count,
+      occupied_tables: occupiedTables.rows[0].count
     });
   } catch (error) {
     console.error('Analytics overview error:', error);
@@ -62,8 +46,8 @@ router.get('/daily-sales', async (req, res) => {
       ORDER BY date DESC
     `;
     
-    const sales = await query(sql);
-    res.json(sales);
+    const sales = await pool.query(sql);
+    res.json(sales.rows);
   } catch (error) {
     console.error('Daily sales error:', error);
     res.status(500).json({ error: 'Veritabanı hatası' });
@@ -90,8 +74,8 @@ router.get('/popular-items', async (req, res) => {
       LIMIT ?
     `;
     
-    const items = await query(sql, [limit]);
-    res.json(items);
+    const items = await pool.query(sql, [limit]);
+    res.json(items.rows);
   } catch (error) {
     console.error('Popular items error:', error);
     res.status(500).json({ error: 'Veritabanı hatası' });
@@ -116,8 +100,8 @@ router.get('/category-sales', async (req, res) => {
       ORDER BY total_revenue DESC
     `;
     
-    const sales = await query(sql);
-    res.json(sales);
+    const sales = await pool.query(sql);
+    res.json(sales.rows);
   } catch (error) {
     console.error('Category sales error:', error);
     res.status(500).json({ error: 'Veritabanı hatası' });
@@ -139,8 +123,8 @@ router.get('/table-performance', async (req, res) => {
       ORDER BY total_revenue DESC
     `;
     
-    const performance = await query(sql);
-    res.json(performance);
+    const performance = await pool.query(sql);
+    res.json(performance.rows);
   } catch (error) {
     console.error('Table performance error:', error);
     res.status(500).json({ error: 'Veritabanı hatası' });
@@ -161,8 +145,8 @@ router.get('/hourly-distribution', async (req, res) => {
       ORDER BY hour
     `;
     
-    const distribution = await query(sql);
-    res.json(distribution);
+    const distribution = await pool.query(sql);
+    res.json(distribution.rows);
   } catch (error) {
     console.error('Hourly distribution error:', error);
     res.status(500).json({ error: 'Veritabanı hatası' });
@@ -180,8 +164,8 @@ router.get('/order-status-distribution', async (req, res) => {
       GROUP BY status
     `;
     
-    const distribution = await query(sql);
-    res.json(distribution);
+    const distribution = await pool.query(sql);
+    res.json(distribution.rows);
   } catch (error) {
     console.error('Order status distribution error:', error);
     res.status(500).json({ error: 'Veritabanı hatası' });

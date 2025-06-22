@@ -1,5 +1,5 @@
 const express = require('express');
-const { query, get, run } = require('../utils/database');
+const pool = require('../utils/database');
 const router = express.Router();
 
 // Tüm siparişleri getir
@@ -7,17 +7,16 @@ router.get('/', async (req, res) => {
   try {
     const sql = `
       SELECT o.*, t.table_number,
-             GROUP_CONCAT(mi.name || ' x' || oi.quantity) as items
+             STRING_AGG(mi.name || ' x' || oi.quantity, ', ') as items
       FROM orders o
       LEFT JOIN tables t ON o.table_id = t.id
       LEFT JOIN order_items oi ON o.id = oi.order_id
       LEFT JOIN menu_items mi ON oi.menu_item_id = mi.id
-      GROUP BY o.id
+      GROUP BY o.id, t.table_number
       ORDER BY o.created_at DESC
     `;
-    
-    const orders = await query(sql);
-    res.json(orders);
+    const result = await pool.query(sql);
+    res.json(result.rows);
   } catch (error) {
     console.error('Get orders error:', error);
     res.status(500).json({ error: 'Veritabanı hatası' });
@@ -28,28 +27,23 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    
-    // Sipariş bilgileri
-    const order = await get(`
+    const orderResult = await pool.query(`
       SELECT o.*, t.table_number 
       FROM orders o 
       LEFT JOIN tables t ON o.table_id = t.id 
-      WHERE o.id = ?
+      WHERE o.id = $1
     `, [id]);
-
+    const order = orderResult.rows[0];
     if (!order) {
       return res.status(404).json({ error: 'Sipariş bulunamadı' });
     }
-    
-    // Sipariş öğeleri
-    const items = await query(`
+    const itemsResult = await pool.query(`
       SELECT oi.*, mi.name, mi.description, mi.image
       FROM order_items oi
       LEFT JOIN menu_items mi ON oi.menu_item_id = mi.id
-      WHERE oi.order_id = ?
+      WHERE oi.order_id = $1
     `, [id]);
-    
-    order.items = items;
+    order.items = itemsResult.rows;
     res.json(order);
   } catch (error) {
     console.error('Get order error:', error);
@@ -73,18 +67,19 @@ router.post('/', async (req, res) => {
     }
     
     // Sipariş oluştur
-    const orderResult = await run(`
+    const orderResult = await pool.query(`
       INSERT INTO orders (table_id, total_amount, notes, status) 
-      VALUES (?, ?, ?, 'pending')
+      VALUES ($1, $2, $3, 'pending')
+      RETURNING id
     `, [table_id, totalAmount, notes]);
     
-    const orderId = orderResult.id;
+    const orderId = orderResult.rows[0].id;
     
     // Sipariş öğelerini ekle
     for (const item of items) {
-      await run(`
+      await pool.query(`
         INSERT INTO order_items (order_id, menu_item_id, quantity, price, notes) 
-        VALUES (?, ?, ?, ?, ?)
+        VALUES ($1, $2, $3, $4, $5)
       `, [orderId, item.menu_item_id, item.quantity, item.price, item.notes]);
     }
     
@@ -110,13 +105,13 @@ router.put('/:id/status', async (req, res) => {
       return res.status(400).json({ error: 'Geçersiz durum' });
     }
     
-    const result = await run(`
+    const result = await pool.query(`
       UPDATE orders 
-      SET status = ?, updated_at = CURRENT_TIMESTAMP 
-      WHERE id = ?
+      SET status = $1, updated_at = CURRENT_TIMESTAMP 
+      WHERE id = $2
     `, [status, id]);
 
-    if (result.changes === 0) {
+    if (result.rowCount === 0) {
       return res.status(404).json({ error: 'Sipariş bulunamadı' });
     }
 
@@ -133,12 +128,12 @@ router.delete('/:id', async (req, res) => {
     const { id } = req.params;
     
     // Önce sipariş öğelerini sil
-    await run('DELETE FROM order_items WHERE order_id = ?', [id]);
+    await pool.query('DELETE FROM order_items WHERE order_id = $1', [id]);
     
     // Sonra siparişi sil
-    const result = await run('DELETE FROM orders WHERE id = ?', [id]);
+    const result = await pool.query('DELETE FROM orders WHERE id = $1', [id]);
 
-    if (result.changes === 0) {
+    if (result.rowCount === 0) {
       return res.status(404).json({ error: 'Sipariş bulunamadı' });
     }
 
@@ -156,17 +151,17 @@ router.get('/table/:tableId', async (req, res) => {
     
     const sql = `
       SELECT o.*, 
-             GROUP_CONCAT(mi.name || ' x' || oi.quantity) as items
+             STRING_AGG(mi.name || ' x' || oi.quantity, ', ') as items
       FROM orders o
       LEFT JOIN order_items oi ON o.id = oi.order_id
       LEFT JOIN menu_items mi ON oi.menu_item_id = mi.id
-      WHERE o.table_id = ? AND o.status IN ('pending', 'preparing', 'ready')
+      WHERE o.table_id = $1 AND o.status IN ('pending', 'preparing', 'ready')
       GROUP BY o.id
       ORDER BY o.created_at DESC
     `;
     
-    const orders = await query(sql, [tableId]);
-    res.json(orders);
+    const result = await pool.query(sql, [tableId]);
+    res.json(result.rows);
   } catch (error) {
     console.error('Get table orders error:', error);
     res.status(500).json({ error: 'Veritabanı hatası' });

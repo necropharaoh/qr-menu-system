@@ -1,17 +1,15 @@
 const express = require('express');
-const { query, get, run } = require('../utils/database');
+const pool = require('../utils/database');
 const router = express.Router();
 
 // Restoran bilgilerini getir
 router.get('/', async (req, res) => {
   try {
-    const restaurant = await get('SELECT * FROM restaurant LIMIT 1');
-    
+    const result = await pool.query('SELECT * FROM restaurant LIMIT 1');
+    const restaurant = result.rows[0];
     if (!restaurant) {
       return res.status(404).json({ error: 'Restoran bilgileri bulunamadı' });
     }
-    
-    // Settings JSON parse et
     if (restaurant.settings) {
       try {
         restaurant.settings = JSON.parse(restaurant.settings);
@@ -21,7 +19,6 @@ router.get('/', async (req, res) => {
     } else {
       restaurant.settings = {};
     }
-    
     res.json(restaurant);
   } catch (error) {
     console.error('Get restaurant error:', error);
@@ -40,15 +37,15 @@ router.put('/', async (req, res) => {
     
     const settingsJson = settings ? JSON.stringify(settings) : null;
     
-    const result = await run(`
+    const result = await pool.query(`
       UPDATE restaurant 
       SET name = ?, address = ?, phone = ?, logo = ?, settings = ?
       WHERE id = (SELECT id FROM restaurant LIMIT 1)
     `, [name, address, phone, logo, settingsJson]);
 
-    if (result.changes === 0) {
+    if (result.rowCount === 0) {
       // Eğer güncelleme yapılamadıysa, yeni kayıt oluştur
-      await run(`
+      await pool.query(`
         INSERT INTO restaurant (name, address, phone, logo, settings)
         VALUES (?, ?, ?, ?, ?)
       `, [name, address, phone, logo, settingsJson]);
@@ -64,12 +61,11 @@ router.put('/', async (req, res) => {
 // Restoran ayarlarını getir
 router.get('/settings', async (req, res) => {
   try {
-    const restaurant = await get('SELECT settings FROM restaurant LIMIT 1');
-    
+    const result = await pool.query('SELECT settings FROM restaurant LIMIT 1');
+    const restaurant = result.rows[0];
     if (!restaurant || !restaurant.settings) {
       return res.json({});
     }
-    
     try {
       const settings = JSON.parse(restaurant.settings);
       res.json(settings);
@@ -89,15 +85,15 @@ router.put('/settings', async (req, res) => {
     
     const settingsJson = JSON.stringify(settings);
     
-    const result = await run(`
+    const result = await pool.query(`
       UPDATE restaurant 
       SET settings = ?
       WHERE id = (SELECT id FROM restaurant LIMIT 1)
     `, [settingsJson]);
 
-    if (result.changes === 0) {
+    if (result.rowCount === 0) {
       // Eğer güncelleme yapılamadıysa, yeni kayıt oluştur
-      await run(`
+      await pool.query(`
         INSERT INTO restaurant (name, settings)
         VALUES ('QR Menü Restoran', ?)
       `, [settingsJson]);
@@ -113,20 +109,16 @@ router.put('/settings', async (req, res) => {
 // Sistem durumu
 router.get('/status', async (req, res) => {
   try {
-    // Veritabanı bağlantısını test et
-    const test = await get('SELECT 1 as test');
-    
-    // Temel istatistikler
-    const tableCount = await get('SELECT COUNT(*) as count FROM tables');
-    const menuItemCount = await get('SELECT COUNT(*) as count FROM menu_items');
-    const categoryCount = await get('SELECT COUNT(*) as count FROM categories');
-    
+    await pool.query('SELECT 1 as test');
+    const tableCount = await pool.query('SELECT COUNT(*) as count FROM tables');
+    const menuItemCount = await pool.query('SELECT COUNT(*) as count FROM menu_items');
+    const categoryCount = await pool.query('SELECT COUNT(*) as count FROM categories');
     res.json({
       status: 'online',
       database: 'connected',
-      tables: tableCount.count,
-      menu_items: menuItemCount.count,
-      categories: categoryCount.count,
+      tables: tableCount.rows[0].count,
+      menu_items: menuItemCount.rows[0].count,
+      categories: categoryCount.rows[0].count,
       timestamp: new Date().toISOString()
     });
   } catch (error) {
@@ -143,8 +135,8 @@ router.get('/status', async (req, res) => {
 // Sistem bilgileri
 router.get('/info', async (req, res) => {
   try {
-    const restaurant = await get('SELECT name, address, phone FROM restaurant LIMIT 1');
-    
+    const result = await pool.query('SELECT name, address, phone FROM restaurant LIMIT 1');
+    const restaurant = result.rows[0];
     res.json({
       name: restaurant?.name || 'QR Menü Sistemi',
       address: restaurant?.address || '',

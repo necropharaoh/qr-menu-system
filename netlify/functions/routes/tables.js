@@ -1,12 +1,12 @@
 const express = require('express');
-const { query, get, run } = require('../utils/database');
+const pool = require('../utils/database');
 const router = express.Router();
 
 // Tüm masaları getir
 router.get('/', async (req, res) => {
   try {
-    const tables = await query('SELECT * FROM tables ORDER BY table_number');
-    res.json(tables);
+    const result = await pool.query('SELECT * FROM tables ORDER BY table_number');
+    res.json(result.rows);
   } catch (error) {
     console.error('Get tables error:', error);
     res.status(500).json({ error: 'Veritabanı hatası' });
@@ -22,12 +22,9 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Masa numarası gerekli' });
     }
     
-    const result = await run(
-      'INSERT INTO tables (table_number, qr_code) VALUES (?, ?)',
-      [table_number, qr_code]
-    );
+    const result = await pool.query('INSERT INTO tables (table_number, qr_code) VALUES ($1, $2) RETURNING id', [table_number, qr_code]);
 
-    res.json({ id: result.id, message: 'Masa eklendi' });
+    res.json({ id: result.rows[0].id, message: 'Masa eklendi' });
   } catch (error) {
     console.error('Add table error:', error);
     if (error.code === 'SQLITE_CONSTRAINT') {
@@ -43,12 +40,9 @@ router.put('/:id', async (req, res) => {
     const { id } = req.params;
     const { table_number, qr_code, status } = req.body;
     
-    const result = await run(
-      'UPDATE tables SET table_number = ?, qr_code = ?, status = ? WHERE id = ?',
-      [table_number, qr_code, status, id]
-    );
+    const result = await pool.query('UPDATE tables SET table_number = $1, qr_code = $2, status = $3 WHERE id = $4 RETURNING *', [table_number, qr_code, status, id]);
 
-    if (result.changes === 0) {
+    if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Masa bulunamadı' });
     }
 
@@ -64,9 +58,9 @@ router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     
-    const result = await run('DELETE FROM tables WHERE id = ?', [id]);
+    const result = await pool.query('DELETE FROM tables WHERE id = $1 RETURNING *', [id]);
 
-    if (result.changes === 0) {
+    if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Masa bulunamadı' });
     }
 
@@ -88,12 +82,9 @@ router.put('/:id/status', async (req, res) => {
       return res.status(400).json({ error: 'Geçersiz durum' });
     }
     
-    const result = await run(
-      'UPDATE tables SET status = ? WHERE id = ?',
-      [status, id]
-    );
+    const result = await pool.query('UPDATE tables SET status = $1 WHERE id = $2 RETURNING *', [status, id]);
 
-    if (result.changes === 0) {
+    if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Masa bulunamadı' });
     }
 
@@ -114,12 +105,9 @@ router.put('/:id/qr', async (req, res) => {
       return res.status(400).json({ error: 'QR kod gerekli' });
     }
     
-    const result = await run(
-      'UPDATE tables SET qr_code = ? WHERE id = ?',
-      [qr_code, id]
-    );
+    const result = await pool.query('UPDATE tables SET qr_code = $1 WHERE id = $2 RETURNING *', [qr_code, id]);
 
-    if (result.changes === 0) {
+    if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Masa bulunamadı' });
     }
 
@@ -134,25 +122,22 @@ router.put('/:id/qr', async (req, res) => {
 router.get('/:id/details', async (req, res) => {
   try {
     const { id } = req.params;
-    
-    const table = await get('SELECT * FROM tables WHERE id = ?', [id]);
+    const tableResult = await pool.query('SELECT * FROM tables WHERE id = $1', [id]);
+    const table = tableResult.rows[0];
     if (!table) {
       return res.status(404).json({ error: 'Masa bulunamadı' });
     }
-    
-    // Masanın aktif siparişlerini getir
-    const orders = await query(`
+    const ordersResult = await pool.query(`
       SELECT o.*, 
-             GROUP_CONCAT(mi.name || ' x' || oi.quantity) as items
+             STRING_AGG(mi.name || ' x' || oi.quantity, ', ') as items
       FROM orders o
       LEFT JOIN order_items oi ON o.id = oi.order_id
       LEFT JOIN menu_items mi ON oi.menu_item_id = mi.id
-      WHERE o.table_id = ? AND o.status IN ('pending', 'preparing', 'ready')
+      WHERE o.table_id = $1 AND o.status IN ('pending', 'preparing', 'ready')
       GROUP BY o.id
       ORDER BY o.created_at DESC
     `, [id]);
-    
-    table.orders = orders;
+    table.orders = ordersResult.rows;
     res.json(table);
   } catch (error) {
     console.error('Get table details error:', error);
