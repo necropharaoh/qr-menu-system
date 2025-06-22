@@ -62,7 +62,7 @@ class AdminPanel {
 
     try {
       console.log('API isteği gönderiliyor...');
-      const response = await API.post('/auth/login', { username, password });
+      const response = await API.post('/api/auth/login', { username, password });
       console.log('API yanıtı:', response);
       
       // Token'ı localStorage'a kaydet
@@ -105,7 +105,7 @@ class AdminPanel {
 
     try {
       console.log('Token doğrulama isteği gönderiliyor...');
-      const response = await API.get('/auth/verify');
+      const response = await API.get('/api/auth/verify');
       console.log('Token doğrulama yanıtı:', response);
       
       if (!response.valid) {
@@ -188,7 +188,7 @@ class AdminPanel {
   async loadOrders() {
     console.log('Siparişler yükleniyor...');
     try {
-      const orders = await API.get('/orders');
+      const orders = await API.get('/api/orders');
       console.log('Siparişler yüklendi:', orders);
       this.updateOrdersUI(orders);
     } catch (error) {
@@ -227,7 +227,7 @@ class AdminPanel {
 
   async loadTables() {
     try {
-      const tables = await API.get('/tables');
+      const tables = await API.get('/api/tables');
       this.updateTablesUI(tables);
     } catch (error) {
       console.error('Masalar yükleme hatası:', error);
@@ -257,8 +257,8 @@ class AdminPanel {
   async loadMenu() {
     try {
       const [categories, items] = await Promise.all([
-        API.get('/menu/categories'),
-        API.get('/menu/items')
+        API.get('/api/menu/categories'),
+        API.get('/api/menu/items')
       ]);
 
       this.updateMenuUI(categories, items);
@@ -315,8 +315,8 @@ class AdminPanel {
   async loadAnalytics() {
     try {
       const [dailySales, popularItems] = await Promise.all([
-        API.get('/analytics/daily-sales'),
-        API.get('/analytics/popular-items')
+        API.get('/api/analytics/daily-sales'),
+        API.get('/api/analytics/popular-items')
       ]);
 
       this.updateAnalyticsUI(dailySales, popularItems);
@@ -360,7 +360,7 @@ class AdminPanel {
 
   async loadSettings() {
     try {
-      const restaurant = await API.get('/restaurant');
+      const restaurant = await API.get('/api/restaurant');
       this.updateSettingsUI(restaurant);
     } catch (error) {
       console.error('Ayarlar yükleme hatası:', error);
@@ -406,7 +406,7 @@ class AdminPanel {
     const phone = document.getElementById('restaurant-phone').value;
 
     try {
-      await API.put('/restaurant', { name, address, phone });
+      await API.put('/api/restaurant', { name, address, phone });
       this.showToast('Ayarlar kaydedildi', 'success');
     } catch (error) {
       console.error('Ayarlar kaydetme hatası:', error);
@@ -417,7 +417,7 @@ class AdminPanel {
   // Diğer işlemler
   async updateOrderStatus(orderId, status) {
     try {
-      await API.put(`/orders/${orderId}/status`, { status });
+      await API.put(`/api/orders/${orderId}/status`, { status });
       this.showToast('Sipariş durumu güncellendi', 'success');
       this.loadOrders();
     } catch (error) {
