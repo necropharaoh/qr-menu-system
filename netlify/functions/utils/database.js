@@ -1,193 +1,251 @@
-const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
+// Netlify Functions için in-memory veritabanı
+// SQLite yerine JavaScript objeleri kullanıyoruz
 
-// Netlify Functions için geçici dosya yolu
-const dbPath = path.join('/tmp', 'restaurant.db');
+// In-memory veritabanı
+let db = {
+  users: [],
+  restaurant: [],
+  tables: [],
+  categories: [],
+  menu_items: [],
+  orders: [],
+  order_items: [],
+  waiter_calls: []
+};
 
-let db = null;
-
-function getDatabase() {
-  if (!db) {
-    db = new sqlite3.Database(dbPath, (err) => {
-      if (err) {
-        console.error('Veritabanı bağlantı hatası:', err);
-      } else {
-        console.log('SQLite veritabanına bağlandı');
-        initDatabase();
-      }
-    });
-  }
-  return db;
-}
-
+// Varsayılan verileri oluştur
 function initDatabase() {
-  const schema = `
-    CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      username TEXT UNIQUE NOT NULL,
-      password TEXT NOT NULL,
-      role TEXT DEFAULT 'admin',
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-
-    CREATE TABLE IF NOT EXISTS restaurant (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL,
-      address TEXT,
-      phone TEXT,
-      logo TEXT,
-      settings TEXT
-    );
-
-    CREATE TABLE IF NOT EXISTS tables (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      table_number INTEGER UNIQUE NOT NULL,
-      qr_code TEXT,
-      status TEXT DEFAULT 'available',
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-
-    CREATE TABLE IF NOT EXISTS categories (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL,
-      description TEXT,
-      image TEXT,
-      sort_order INTEGER DEFAULT 0,
-      active BOOLEAN DEFAULT 1
-    );
-
-    CREATE TABLE IF NOT EXISTS menu_items (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      category_id INTEGER,
-      name TEXT NOT NULL,
-      description TEXT,
-      price DECIMAL(10,2) NOT NULL,
-      image TEXT,
-      available BOOLEAN DEFAULT 1,
-      sort_order INTEGER DEFAULT 0,
-      FOREIGN KEY (category_id) REFERENCES categories (id)
-    );
-
-    CREATE TABLE IF NOT EXISTS orders (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      table_id INTEGER,
-      status TEXT DEFAULT 'pending',
-      total_amount DECIMAL(10,2) DEFAULT 0,
-      notes TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (table_id) REFERENCES tables (id)
-    );
-
-    CREATE TABLE IF NOT EXISTS order_items (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      order_id INTEGER,
-      menu_item_id INTEGER,
-      quantity INTEGER NOT NULL,
-      price DECIMAL(10,2) NOT NULL,
-      notes TEXT,
-      FOREIGN KEY (order_id) REFERENCES orders (id),
-      FOREIGN KEY (menu_item_id) REFERENCES menu_items (id)
-    );
-
-    CREATE TABLE IF NOT EXISTS waiter_calls (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      table_id INTEGER,
-      status TEXT DEFAULT 'pending',
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      resolved_at DATETIME,
-      FOREIGN KEY (table_id) REFERENCES tables (id)
-    );
-  `;
-
-  db.exec(schema, (err) => {
-    if (err) {
-      console.error('Veritabanı şeması oluşturma hatası:', err);
-    } else {
-      console.log('Veritabanı şeması başarıyla oluşturuldu');
-      createDefaultData();
-    }
-  });
-}
-
-function createDefaultData() {
+  console.log('In-memory veritabanı başlatılıyor...');
+  
   // Varsayılan admin kullanıcısı
   const bcrypt = require('bcryptjs');
   const adminPassword = bcrypt.hashSync('admin123', 10);
   
-  db.run(`INSERT OR IGNORE INTO users (username, password, role) VALUES (?, ?, ?)`, 
-    ['admin', adminPassword, 'admin']);
+  if (db.users.length === 0) {
+    db.users.push({
+      id: 1,
+      username: 'admin',
+      password: adminPassword,
+      role: 'admin',
+      created_at: new Date().toISOString()
+    });
+  }
 
   // Varsayılan restoran bilgileri
-  db.run(`INSERT OR IGNORE INTO restaurant (name, address, phone) VALUES (?, ?, ?)`,
-    ['QR Menü Restoran', 'Örnek Adres', '+90 555 123 4567']);
+  if (db.restaurant.length === 0) {
+    db.restaurant.push({
+      id: 1,
+      name: 'QR Menü Restoran',
+      address: 'Örnek Adres',
+      phone: '+90 555 123 4567',
+      logo: '',
+      settings: '{}'
+    });
+  }
 
   // Örnek kategoriler
-  const categories = [
-    ['İçecekler', 'Soğuk ve sıcak içecekler'],
-    ['Ana Yemekler', 'Taze pişmiş ana yemekler'],
-    ['Tatlılar', 'Ev yapımı tatlılar'],
-    ['Salatalar', 'Taze salatalar']
-  ];
-
-  categories.forEach(([name, desc]) => {
-    db.run(`INSERT OR IGNORE INTO categories (name, description) VALUES (?, ?)`, [name, desc]);
-  });
+  if (db.categories.length === 0) {
+    const categories = [
+      { id: 1, name: 'İçecekler', description: 'Soğuk ve sıcak içecekler', image: '', sort_order: 0, active: true },
+      { id: 2, name: 'Ana Yemekler', description: 'Taze pişmiş ana yemekler', image: '', sort_order: 1, active: true },
+      { id: 3, name: 'Tatlılar', description: 'Ev yapımı tatlılar', image: '', sort_order: 2, active: true },
+      { id: 4, name: 'Salatalar', description: 'Taze salatalar', image: '', sort_order: 3, active: true }
+    ];
+    db.categories.push(...categories);
+  }
 
   // Örnek menü öğeleri
-  const menuItems = [
-    [1, 'Kola', 'Soğuk kola', 15.00],
-    [1, 'Su', 'Doğal kaynak suyu', 5.00],
-    [2, 'Tavuk Şiş', 'Izgara tavuk şiş', 45.00],
-    [2, 'Kebap', 'Özel soslu kebap', 55.00],
-    [3, 'Baklava', 'Ev yapımı baklava', 25.00],
-    [4, 'Çoban Salata', 'Taze sebzeler', 20.00]
-  ];
-
-  menuItems.forEach(([catId, name, desc, price]) => {
-    db.run(`INSERT OR IGNORE INTO menu_items (category_id, name, description, price) VALUES (?, ?, ?, ?)`,
-      [catId, name, desc, price]);
-  });
+  if (db.menu_items.length === 0) {
+    const menuItems = [
+      { id: 1, category_id: 1, name: 'Kola', description: 'Soğuk kola', price: 15.00, image: '', available: true, sort_order: 0 },
+      { id: 2, category_id: 1, name: 'Su', description: 'Doğal kaynak suyu', price: 5.00, image: '', available: true, sort_order: 1 },
+      { id: 3, category_id: 2, name: 'Tavuk Şiş', description: 'Izgara tavuk şiş', price: 45.00, image: '', available: true, sort_order: 0 },
+      { id: 4, category_id: 2, name: 'Kebap', description: 'Özel soslu kebap', price: 55.00, image: '', available: true, sort_order: 1 },
+      { id: 5, category_id: 3, name: 'Baklava', description: 'Ev yapımı baklava', price: 25.00, image: '', available: true, sort_order: 0 },
+      { id: 6, category_id: 4, name: 'Çoban Salata', description: 'Taze sebzeler', price: 20.00, image: '', available: true, sort_order: 0 }
+    ];
+    db.menu_items.push(...menuItems);
+  }
 
   // Örnek masalar
-  for (let i = 1; i <= 10; i++) {
-    db.run(`INSERT OR IGNORE INTO tables (table_number) VALUES (?)`, [i]);
+  if (db.tables.length === 0) {
+    for (let i = 1; i <= 10; i++) {
+      db.tables.push({
+        id: i,
+        table_number: i,
+        qr_code: '',
+        status: 'available',
+        created_at: new Date().toISOString()
+      });
+    }
   }
+
+  console.log('In-memory veritabanı başlatıldı');
 }
+
+// Veritabanını başlat
+initDatabase();
 
 // Promise wrapper for database operations
 function query(sql, params = []) {
   return new Promise((resolve, reject) => {
-    const database = getDatabase();
-    database.all(sql, params, (err, rows) => {
-      if (err) reject(err);
-      else resolve(rows);
-    });
+    try {
+      // Basit SQL parsing (sadece SELECT için)
+      if (sql.toLowerCase().includes('select')) {
+        const tableMatch = sql.match(/from\s+(\w+)/i);
+        if (tableMatch) {
+          const tableName = tableMatch[1];
+          if (db[tableName]) {
+            // Basit WHERE koşulu parsing
+            if (sql.toLowerCase().includes('where')) {
+              const whereMatch = sql.match(/where\s+(\w+)\s*=\s*\?/i);
+              if (whereMatch && params.length > 0) {
+                const field = whereMatch[1];
+                const value = params[0];
+                const filtered = db[tableName].filter(item => item[field] === value);
+                resolve(filtered);
+              } else {
+                resolve(db[tableName]);
+              }
+            } else {
+              resolve(db[tableName]);
+            }
+          } else {
+            resolve([]);
+          }
+        } else {
+          resolve([]);
+        }
+      } else {
+        resolve([]);
+      }
+    } catch (error) {
+      reject(error);
+    }
   });
 }
 
 function get(sql, params = []) {
   return new Promise((resolve, reject) => {
-    const database = getDatabase();
-    database.get(sql, params, (err, row) => {
-      if (err) reject(err);
-      else resolve(row);
-    });
+    try {
+      // Basit SQL parsing (sadece SELECT için)
+      if (sql.toLowerCase().includes('select')) {
+        const tableMatch = sql.match(/from\s+(\w+)/i);
+        if (tableMatch) {
+          const tableName = tableMatch[1];
+          if (db[tableName]) {
+            // Basit WHERE koşulu parsing
+            if (sql.toLowerCase().includes('where')) {
+              const whereMatch = sql.match(/where\s+(\w+)\s*=\s*\?/i);
+              if (whereMatch && params.length > 0) {
+                const field = whereMatch[1];
+                const value = params[0];
+                const found = db[tableName].find(item => item[field] === value);
+                resolve(found || null);
+              } else {
+                resolve(db[tableName][0] || null);
+              }
+            } else {
+              resolve(db[tableName][0] || null);
+            }
+          } else {
+            resolve(null);
+          }
+        } else {
+          resolve(null);
+        }
+      } else {
+        resolve(null);
+      }
+    } catch (error) {
+      reject(error);
+    }
   });
 }
 
 function run(sql, params = []) {
   return new Promise((resolve, reject) => {
-    const database = getDatabase();
-    database.run(sql, params, function(err) {
-      if (err) reject(err);
-      else resolve({ id: this.lastID, changes: this.changes });
-    });
+    try {
+      // INSERT işlemleri için
+      if (sql.toLowerCase().includes('insert')) {
+        const tableMatch = sql.match(/into\s+(\w+)/i);
+        if (tableMatch) {
+          const tableName = tableMatch[1];
+          if (db[tableName]) {
+            const newId = Math.max(...db[tableName].map(item => item.id || 0)) + 1;
+            const newItem = { id: newId };
+            
+            // Basit INSERT parsing (sadece VALUES için)
+            const valuesMatch = sql.match(/values\s*\(([^)]+)\)/i);
+            if (valuesMatch) {
+              const fields = valuesMatch[1].split(',').map(f => f.trim().replace(/[`'"]/g, ''));
+              fields.forEach((field, index) => {
+                if (params[index] !== undefined) {
+                  newItem[field] = params[index];
+                }
+              });
+            }
+            
+            db[tableName].push(newItem);
+            resolve({ id: newId, changes: 1 });
+          }
+        }
+      }
+      // UPDATE işlemleri için
+      else if (sql.toLowerCase().includes('update')) {
+        const tableMatch = sql.match(/update\s+(\w+)/i);
+        if (tableMatch) {
+          const tableName = tableMatch[1];
+          if (db[tableName]) {
+            // Basit UPDATE parsing
+            const whereMatch = sql.match(/where\s+(\w+)\s*=\s*\?/i);
+            if (whereMatch && params.length > 0) {
+              const field = whereMatch[1];
+              const value = params[0];
+              const index = db[tableName].findIndex(item => item[field] === value);
+              if (index !== -1) {
+                // Basit SET parsing
+                const setMatch = sql.match(/set\s+(\w+)\s*=\s*\?/i);
+                if (setMatch && params.length > 1) {
+                  const setField = setMatch[1];
+                  const setValue = params[1];
+                  db[tableName][index][setField] = setValue;
+                  resolve({ id: db[tableName][index].id, changes: 1 });
+                }
+              }
+            }
+          }
+        }
+      }
+      // DELETE işlemleri için
+      else if (sql.toLowerCase().includes('delete')) {
+        const tableMatch = sql.match(/from\s+(\w+)/i);
+        if (tableMatch) {
+          const tableName = tableMatch[1];
+          if (db[tableName]) {
+            const whereMatch = sql.match(/where\s+(\w+)\s*=\s*\?/i);
+            if (whereMatch && params.length > 0) {
+              const field = whereMatch[1];
+              const value = params[0];
+              const index = db[tableName].findIndex(item => item[field] === value);
+              if (index !== -1) {
+                db[tableName].splice(index, 1);
+                resolve({ id: 0, changes: 1 });
+              }
+            }
+          }
+        }
+      }
+      
+      resolve({ id: 0, changes: 0 });
+    } catch (error) {
+      reject(error);
+    }
   });
 }
 
 module.exports = {
-  getDatabase,
+  getDatabase: () => db,
   query,
   get,
   run
