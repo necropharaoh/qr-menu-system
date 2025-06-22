@@ -1,7 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { get } = require('../utils/database');
+const pool = require('../utils/database');
 const router = express.Router();
 
 const JWT_SECRET = process.env.JWT_SECRET || 'qr-menu-secret-key';
@@ -15,13 +15,15 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Kullanıcı adı ve şifre gerekli' });
     }
 
-    const user = await get('SELECT * FROM users WHERE username = ?', [username]);
+    // PostgreSQL sorgusu
+    const result = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
+    const user = result.rows[0];
 
     if (!user) {
       return res.status(401).json({ error: 'Geçersiz kullanıcı adı veya şifre' });
     }
 
-    const isValidPassword = bcrypt.compareSync(password, user.password);
+    const isValidPassword = await bcrypt.compare(password, user.password);
     if (!isValidPassword) {
       return res.status(401).json({ error: 'Geçersiz kullanıcı adı veya şifre' });
     }
