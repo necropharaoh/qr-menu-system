@@ -6,13 +6,13 @@ const router = express.Router();
 router.get('/', async (req, res) => {
   try {
     const sql = `
-      SELECT o.*, t.table_number,
+      SELECT o.*, t.number as table_number,
              STRING_AGG(mi.name || ' x' || oi.quantity, ', ') as items
       FROM orders o
       LEFT JOIN tables t ON o.table_id = t.id
       LEFT JOIN order_items oi ON o.id = oi.order_id
       LEFT JOIN menu_items mi ON oi.menu_item_id = mi.id
-      GROUP BY o.id, t.table_number
+      GROUP BY o.id, t.number
       ORDER BY o.created_at DESC
     `;
     const result = await pool.query(sql);
@@ -28,7 +28,7 @@ router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const orderResult = await pool.query(`
-      SELECT o.*, t.table_number 
+      SELECT o.*, t.number as table_number 
       FROM orders o 
       LEFT JOIN tables t ON o.table_id = t.id 
       WHERE o.id = $1
