@@ -204,7 +204,7 @@ class AdminPanel {
         <div class="order-item" data-id="${order.id}">
           <div class="order-header">
             <span class="order-number">#${order.id}</span>
-            <span class="table-number">Masa ${order.table_number}</span>
+            <span class="table-number">Masa ${order.number}</span>
             <span class="order-time">${this.formatDate(order.created_at)}</span>
           </div>
           <div class="order-items">${order.items || ''}</div>
@@ -241,7 +241,7 @@ class AdminPanel {
       tablesContainer.innerHTML = tables.map(table => `
         <div class="table-item" data-id="${table.id}">
           <div class="table-info">
-            <h4>Masa ${table.table_number}</h4>
+            <h4>Masa ${table.number}</h4>
             <span class="table-status ${table.status}">${this.getTableStatusText(table.status)}</span>
           </div>
           <div class="table-actions">
@@ -494,7 +494,7 @@ class AdminPanel {
       e.preventDefault();
       const tableNumber = document.getElementById('add-table-number').value;
       try {
-        await API.post('/api/tables', { table_number: tableNumber });
+        await API.post('/api/tables', { number: tableNumber });
         this.showToast('Masa eklendi', 'success');
         this.closeModal();
         this.loadTables();
@@ -510,7 +510,7 @@ class AdminPanel {
       <form id="edit-table-form">
         <div class="form-group">
           <label for="edit-table-number">Masa Numarası</label>
-          <input type="number" id="edit-table-number" value="${table.table_number}" required min="1">
+          <input type="number" id="edit-table-number" value="${table.number}" required min="1">
         </div>
         <button type="submit" class="btn btn-primary">Güncelle</button>
       </form>
@@ -520,7 +520,7 @@ class AdminPanel {
       e.preventDefault();
       const tableNumber = document.getElementById('edit-table-number').value;
       try {
-        await API.put(`/api/tables/${table.id}`, { table_number: tableNumber, qr_code: table.qr_code, status: table.status });
+        await API.put(`/api/tables/${table.id}`, { number: tableNumber, qr_code: table.qr_code, status: table.status });
         this.showToast('Masa güncellendi', 'success');
         this.closeModal();
         this.loadTables();

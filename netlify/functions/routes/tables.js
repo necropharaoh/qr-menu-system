@@ -5,7 +5,7 @@ const router = express.Router();
 // Tüm masaları getir
 router.get('/', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM tables ORDER BY table_number');
+    const result = await pool.query('SELECT * FROM tables ORDER BY number');
     res.json(result.rows);
   } catch (error) {
     console.error('Get tables error:', error);
@@ -16,13 +16,13 @@ router.get('/', async (req, res) => {
 // Masa ekle
 router.post('/', async (req, res) => {
   try {
-    const { table_number, qr_code } = req.body;
+    const { number, qr_code } = req.body;
     
-    if (!table_number) {
+    if (!number) {
       return res.status(400).json({ error: 'Masa numarası gerekli' });
     }
     
-    const result = await pool.query('INSERT INTO tables (table_number, qr_code) VALUES ($1, $2) RETURNING id', [table_number, qr_code]);
+    const result = await pool.query('INSERT INTO tables (number, qr_code) VALUES ($1, $2) RETURNING id', [number, qr_code]);
 
     res.json({ id: result.rows[0].id, message: 'Masa eklendi' });
   } catch (error) {
@@ -38,9 +38,9 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { table_number, qr_code, status } = req.body;
+    const { number, qr_code, status } = req.body;
     
-    const result = await pool.query('UPDATE tables SET table_number = $1, qr_code = $2, status = $3 WHERE id = $4 RETURNING *', [table_number, qr_code, status, id]);
+    const result = await pool.query('UPDATE tables SET number = $1, qr_code = $2, status = $3 WHERE id = $4 RETURNING *', [number, qr_code, status, id]);
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Masa bulunamadı' });
