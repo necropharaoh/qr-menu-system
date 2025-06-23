@@ -6,7 +6,7 @@ const router = express.Router();
 router.get('/', async (req, res) => {
   try {
     const sql = `
-      SELECT o.*, t.number as table_number,
+      SELECT o.*, t.number as number,
              STRING_AGG(mi.name || ' x' || oi.quantity, ', ') as items
       FROM orders o
       LEFT JOIN tables t ON o.table_id = t.id
@@ -28,7 +28,7 @@ router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const orderResult = await pool.query(`
-      SELECT o.*, t.number as table_number 
+      SELECT o.*, t.number as number 
       FROM orders o 
       LEFT JOIN tables t ON o.table_id = t.id 
       WHERE o.id = $1

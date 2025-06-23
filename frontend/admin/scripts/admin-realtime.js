@@ -100,7 +100,7 @@ class AdminRealTimeUpdates {
 
   handleNewOrder(order) {
     // Yeni sipariş bildirimi
-    const message = `Yeni sipariş! Masa ${order.table_number} - ${this.formatPrice(order.total_amount)}`;
+    const message = `Yeni sipariş! Masa ${order.number} - ${this.formatPrice(order.total_amount)}`;
     
     // Bildirim göster
     this.showNotification(message, 'order');
@@ -116,7 +116,7 @@ class AdminRealTimeUpdates {
 
   handleNewWaiterCall(call) {
     // Yeni garson çağrısı bildirimi
-    const message = `Garson çağrısı! Masa ${call.table_number}`;
+    const message = `Garson çağrısı! Masa ${call.number}`;
     
     // Bildirim göster
     this.showNotification(message, 'waiter');

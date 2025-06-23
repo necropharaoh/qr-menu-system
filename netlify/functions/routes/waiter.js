@@ -6,7 +6,7 @@ const router = express.Router();
 router.get('/', async (req, res) => {
   try {
     const sql = `
-      SELECT wc.*, t.number as table_number
+      SELECT wc.*, t.number as number
       FROM waiter_calls wc
       LEFT JOIN tables t ON wc.table_id = t.id
       ORDER BY wc.created_at DESC
@@ -23,7 +23,7 @@ router.get('/', async (req, res) => {
 router.get('/pending', async (req, res) => {
   try {
     const sql = `
-      SELECT wc.*, t.number as table_number
+      SELECT wc.*, t.number as number
       FROM waiter_calls wc
       LEFT JOIN tables t ON wc.table_id = t.id
       WHERE wc.status = 'pending'
@@ -121,7 +121,7 @@ router.get('/table/:tableId', async (req, res) => {
     const { tableId } = req.params;
     
     const sql = `
-      SELECT wc.*, t.number as table_number
+      SELECT wc.*, t.number as number
       FROM waiter_calls wc
       LEFT JOIN tables t ON wc.table_id = t.id
       WHERE wc.table_id = $1

@@ -113,13 +113,13 @@ router.get('/table-performance', async (req, res) => {
   try {
     const sql = `
       SELECT 
-        t.table_number,
+        t.number,
         COUNT(o.id) as order_count,
         SUM(o.total_amount) as total_revenue,
         AVG(o.total_amount) as avg_order_value
       FROM tables t
       LEFT JOIN orders o ON t.id = o.table_id AND o.status = 'served'
-      GROUP BY t.id, t.table_number
+      GROUP BY t.id, t.number
       ORDER BY total_revenue DESC
     `;
     
