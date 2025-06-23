@@ -245,7 +245,7 @@ class AdminPanel {
             <span class="table-status ${table.status}">${this.getTableStatusText(table.status)}</span>
           </div>
           <div class="table-actions">
-            <button onclick="adminPanel.editTable(${table.id})" class="btn btn-sm btn-primary">Düzenle</button>
+            <button onclick="adminPanel.showEditTableModal(${JSON.stringify(table).replace(/"/g, '&quot;')})" class="btn btn-sm btn-primary">Düzenle</button>
             <button onclick="adminPanel.generateQR(${table.id})" class="btn btn-sm btn-secondary">QR Kod</button>
             <button onclick="adminPanel.deleteTable(${table.id})" class="btn btn-sm btn-danger">Sil</button>
           </div>
@@ -478,17 +478,112 @@ class AdminPanel {
     }, 3000);
   }
 
+  // Masa ekleme fonksiyonu
+  showAddTableModal() {
+    const modalBody = `
+      <form id="add-table-form">
+        <div class="form-group">
+          <label for="add-table-number">Masa Numarası</label>
+          <input type="number" id="add-table-number" required min="1">
+        </div>
+        <button type="submit" class="btn btn-primary">Ekle</button>
+      </form>
+    `;
+    this.showModal('Masa Ekle', modalBody);
+    document.getElementById('add-table-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const tableNumber = document.getElementById('add-table-number').value;
+      try {
+        await API.post('/api/tables', { table_number: tableNumber });
+        this.showToast('Masa eklendi', 'success');
+        this.closeModal();
+        this.loadTables();
+      } catch (error) {
+        this.showToast('Masa eklenirken hata oluştu', 'error');
+      }
+    });
+  }
+
+  // Masa düzenleme fonksiyonu
+  showEditTableModal(table) {
+    const modalBody = `
+      <form id="edit-table-form">
+        <div class="form-group">
+          <label for="edit-table-number">Masa Numarası</label>
+          <input type="number" id="edit-table-number" value="${table.table_number}" required min="1">
+        </div>
+        <button type="submit" class="btn btn-primary">Güncelle</button>
+      </form>
+    `;
+    this.showModal('Masa Düzenle', modalBody);
+    document.getElementById('edit-table-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const tableNumber = document.getElementById('edit-table-number').value;
+      try {
+        await API.put(`/api/tables/${table.id}`, { table_number: tableNumber, qr_code: table.qr_code, status: table.status });
+        this.showToast('Masa güncellendi', 'success');
+        this.closeModal();
+        this.loadTables();
+      } catch (error) {
+        this.showToast('Masa güncellenirken hata oluştu', 'error');
+      }
+    });
+  }
+
+  // Masa silme fonksiyonu
+  async deleteTable(id) {
+    if (!confirm('Bu masayı silmek istediğinize emin misiniz?')) return;
+    try {
+      await API.delete(`/api/tables/${id}`);
+      this.showToast('Masa silindi', 'success');
+      this.loadTables();
+    } catch (error) {
+      this.showToast('Masa silinirken hata oluştu', 'error');
+    }
+  }
+
+  // QR kod gösterme fonksiyonu
+  async generateQR(id) {
+    try {
+      const table = await API.get(`/api/tables/${id}/details`);
+      const url = `${window.location.origin}/menu/${table.id}`;
+      const modalBody = `
+        <div style="text-align:center;">
+          <div id="qr-code-container"></div>
+          <p><strong>URL:</strong> <a href="${url}" target="_blank">${url}</a></p>
+        </div>
+      `;
+      this.showModal('QR Kod', modalBody);
+      setTimeout(() => {
+        if (typeof QRCode !== 'undefined') {
+          new QRCode(document.getElementById('qr-code-container'), {
+            text: url,
+            width: 200,
+            height: 200,
+            colorDark: "#000000",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+          });
+        }
+      }, 100);
+    } catch (error) {
+      this.showToast('QR kod oluşturulurken hata oluştu', 'error');
+    }
+  }
+
+  // Modal gösterme ve kapama fonksiyonları
+  showModal(title, bodyHtml) {
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-body').innerHTML = bodyHtml;
+    document.getElementById('modal-overlay').style.display = 'flex';
+  }
+  closeModal() {
+    document.getElementById('modal-overlay').style.display = 'none';
+  }
+
   // Placeholder fonksiyonlar
   editTable(id) {
     this.showToast('Masa düzenleme özelliği yakında eklenecek', 'info');
-  }
-
-  generateQR(id) {
-    this.showToast('QR kod oluşturma özelliği yakında eklenecek', 'info');
-  }
-
-  deleteTable(id) {
-    this.showToast('Masa silme özelliği yakında eklenecek', 'info');
   }
 
   editCategory(id) {
@@ -548,4 +643,10 @@ function addMenuItem() {
 // Admin paneli başlat
 console.log('Admin paneli başlatılıyor...');
 const adminPanel = new AdminPanel();
-console.log('Admin paneli başlatıldı:', adminPanel); 
+console.log('Admin paneli başlatıldı:', adminPanel);
+
+document.addEventListener('DOMContentLoaded', function() {
+  window.adminPanel = new AdminPanel();
+  window.closeModal = () => window.adminPanel.closeModal();
+  window.addTable = () => window.adminPanel.showAddTableModal();
+}); 
